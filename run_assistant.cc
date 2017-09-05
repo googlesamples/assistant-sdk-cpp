@@ -51,7 +51,6 @@ using google::assistant::embedded::v1alpha1::ConverseRequest;
 using google::assistant::embedded::v1alpha1::ConverseResponse;
 using google::assistant::embedded::v1alpha1::AudioInConfig;
 using google::assistant::embedded::v1alpha1::AudioOutConfig;
-using google::assistant::embedded::v1alpha1::DeviceConfig;
 using google::assistant::embedded::v1alpha1::ConverseResponse_EventType_END_OF_UTTERANCE;
 
 using grpc::CallCredentials;
