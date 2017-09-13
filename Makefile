@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-GRPC_SRC_PATH ?= ../grpc
-GOOGLEAPIS_GENS_PATH ?= ../googleapis/gens
+GRPC_SRC_PATH ?= ./grpc
+GOOGLEAPIS_GENS_PATH ?= ./googleapis/gens
+PROTO_PATH = ./proto
 GOOGLEAPIS_API_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/api \
 	-name '*.pb.cc')
 GOOGLEAPIS_RPC_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/rpc \
@@ -20,13 +21,13 @@ GOOGLEAPIS_RPC_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/rpc \
 
 GOOGLEAPIS_CCS = $(GOOGLEAPIS_API_CCS) $(GOOGLEAPIS_RPC_CCS)
 
-GOOGLEAPIS_ASSISTANT_CCS = embedded_assistant.pb.cc embedded_assistant.grpc.pb.cc
+GOOGLEAPIS_ASSISTANT_CCS = ./src/embedded_assistant.pb.cc ./src/embedded_assistant.grpc.pb.cc
 
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
 CXX = g++
 CPPFLAGS += -I/usr/local/include -pthread -I$(GOOGLEAPIS_GENS_PATH) \
-	    -I$(GRPC_SRC_PATH)
+	    -I$(GRPC_SRC_PATH) -I./src/
 CXXFLAGS += -std=c++11
 # grpc_cronet is for JSON functions in gRPC library.
 ifeq ($(SYSTEM),Darwin)
@@ -41,7 +42,7 @@ endif
 
 AUDIO_SRCS =
 ifeq ($(SYSTEM),Linux)
-AUDIO_SRCS += audio_input_alsa.cc audio_output_alsa.cc
+AUDIO_SRCS += src/audio_input_alsa.cc src/audio_output_alsa.cc
 LDFLAGS += `pkg-config --libs alsa`
 endif
 
@@ -53,19 +54,21 @@ googleapis.ar: $(GOOGLEAPIS_CCS:.cc=.o)
 
 run_assistant.o: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h)
 
-run_assistant: run_assistant.o $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
-	$(AUDIO_SRCS:.cc=.o) audio_input_file.o json_util.o service_account_util.o
+run_assistant: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
+	$(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/json_util.o ./src/service_account_util.o ./src/run_assistant.o 
+	$(CXX) $^ $(LDFLAGS) -o $@
+	cp ./src/run_assistant.o ./run_assistant.o
+
+json_util_test: ./src/json_util.o ./src/json_util_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-json_util_test: json_util.o json_util_test.o
-	$(CXX) $^ $(LDFLAGS) -o $@
-
-$(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS): embedded_assistant.proto
-	protoc --proto_path=.:$(GOOGLEAPIS_GENS_PATH)/..:/usr/local/include \
-	--cpp_out=./ --grpc_out=./ --plugin=protoc-gen-grpc=/usr/local/bin/grpc_cpp_plugin $^
+$(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS):
+	protoc -I=$(PROTO_PATH) --proto_path=.:$(GOOGLEAPIS_GENS_PATH)/..:$(PROTO_PATH):/usr/local/include \
+	--cpp_out=./src --grpc_out=./src --plugin=protoc-gen-grpc=/usr/local/bin/grpc_cpp_plugin $(PROTO_PATH)/embedded_assistant.proto $^
 
 clean:
 	rm -f *.o run_assistant googleapis.ar \
 		$(GOOGLEAPIS_CCS:.cc=.o) \
 		$(GOOGLEAPIS_ASSISTANT_CCS) $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) \
-		$(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o)
+		$(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) \
+		./src/*.o

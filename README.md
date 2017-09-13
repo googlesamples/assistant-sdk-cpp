@@ -27,7 +27,7 @@ sudo apt-get install libasound2-dev  # For ALSA sound output
 sudo apt-get install libcurl4-openssl-dev # CURL development library
 ```
 
-3. Build Protocol Buffer, gRPC and Google APIs
+3. Build Protocol Buffer, gRPC, and Google APIs
 ```
 git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
 cd grpc/
@@ -49,7 +49,7 @@ cd googleapis/
 make LANGUAGE=cpp
 ```
 
-4. Make sure you setup env variable `$GOOGLEAPIS_GENS_PATH`
+4. Make sure you setup environment variable `$GOOGLEAPIS_GENS_PATH`
 ```
 export GOOGLEAPIS_GENS_PATH=`pwd`/gens
 ```
