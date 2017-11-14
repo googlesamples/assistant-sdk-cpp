@@ -57,7 +57,6 @@ run_assistant.o: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h)
 run_assistant: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
 	$(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/json_util.o ./src/service_account_util.o ./src/run_assistant.o 
 	$(CXX) $^ $(LDFLAGS) -o $@
-	cp ./src/run_assistant.o ./run_assistant.o
 
 json_util_test: ./src/json_util.o ./src/json_util_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
@@ -65,6 +64,8 @@ json_util_test: ./src/json_util.o ./src/json_util_test.o
 $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS):
 	protoc -I=$(PROTO_PATH) --proto_path=.:$(GOOGLEAPIS_GENS_PATH)/..:$(PROTO_PATH):/usr/local/include \
 	--cpp_out=./src --grpc_out=./src --plugin=protoc-gen-grpc=/usr/local/bin/grpc_cpp_plugin $(PROTO_PATH)/embedded_assistant.proto $^
+
+protobufs: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS)
 
 clean:
 	rm -f *.o run_assistant googleapis.ar \
