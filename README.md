@@ -9,7 +9,10 @@ Refer to the [Assistant SDK documentation](https://developers.google.com/assista
 
 ## Setup instructions
 
-1. Remove previously installed Protobuf/gRPC/related packages and files. If you have not setup before, you can skip this step:
+### Clean Project
+
+_If you have not setup this project before, you can skip this step._
+
 ```
 sudo apt-get purge libc-ares-dev  # https://github.com/grpc/grpc/pull/10706#issuecomment-302775038
 sudo apt-get purge libprotobuf-dev libprotoc-dev
@@ -18,6 +21,15 @@ sudo rm -rf /usr/local/bin/grpc_* /usr/local/bin/protoc \
     /usr/local/lib/libproto* /usr/local/lib/libgpr* /usr/local/lib/libgrpc* \
     /usr/local/lib/pkgconfig/protobuf* /usr/local/lib/pkgconfig/grpc* \
     /usr/local/share/grpc/
+```
+
+### Build Project
+
+1. Clone this project
+```
+git clone https://github.com/googlesamples/assistant-sdk-cpp.git
+cd assistant-sdk-cpp
+export PROJECT_PATH=$(pwd)
 ```
 
 2. Install dependencies
@@ -30,7 +42,9 @@ sudo apt-get install libcurl4-openssl-dev # CURL development library
 3. Build Protocol Buffer, gRPC, and Google APIs
 ```
 git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
-cd grpc/
+GRPC_PATH=${PROJECT_PATH}/grpc
+cd ${GRPC_PATH}
+
 git submodule update --init
 
 cd third_party/protobuf
@@ -38,12 +52,14 @@ cd third_party/protobuf
 sudo make install
 sudo ldconfig
 
-cd ../../
+export LDFLAGS="$LDFLAGS -lm"
+cd ${GRPC_PATH}
+make clean
 make
 sudo make install
 sudo ldconfig
 
-cd ../
+cd ${PROJECT_PATH}
 git clone https://github.com/googleapis/googleapis.git
 cd googleapis/
 make LANGUAGE=cpp
@@ -51,15 +67,12 @@ make LANGUAGE=cpp
 
 4. Make sure you setup environment variable `$GOOGLEAPIS_GENS_PATH`
 ```
-export GOOGLEAPIS_GENS_PATH=`pwd`/gens
+export GOOGLEAPIS_GENS_PATH=${PROJECT_PATH}/googleapis/gens
 ```
 
-5. Clone and build assistant-grpc
+5. Build this project
 ```
-cd ../
-git clone https://github.com/googlesamples/assistant-sdk-cpp.git
-
-cd assistant-sdk-cpp/
+cd ${PROJECT_PATH}
 make run_assistant
 ```
 
