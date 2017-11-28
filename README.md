@@ -84,17 +84,13 @@ For end-user's credentials:
 * Move it in this folder and rename it to `client_secret.json`
 * run `get_credentials.sh` in this folder. It will create the file `credentials.json`.
 
-For service account's credentials in Google Cloud Platform Console:
-
-* Open **API Manager -> Credentials**
-* Click **Create credentials -> Service account key**. Choose key type **JSON**, and click **Create**
-* The service account's credentials JSON file will be downloaded. Notice that this JSON file can only be downloaded once, so keep it for future reference.
-
 7. Start `run_assistant`
 ```
 ./run_assistant --audio_input ./resources/switch_to_channel_5.raw --credentials_file ./credentials.json --credentials_type USER_ACCOUNT
-./run_assistant --audio_input ./resources/weather_in_mountain_view.raw --credentials_file <YOUR_SERVICE_ACCOUNT_JSON> --credentials_type SERVICE_ACCOUNT
-# On Linux workstation, you can also use ALSA audio input:
+```
+
+On Linux workstation, you can alternatively use ALSA audio input:
+```
 ./run_assistant --audio_input ALSA_INPUT --credentials_file ./credentials.json --credentials_type USER_ACCOUNT
 ```
 

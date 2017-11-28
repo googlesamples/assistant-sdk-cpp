@@ -44,7 +44,6 @@ limitations under the License.
 #include "audio_input.h"
 #include "audio_input_file.h"
 #include "json_util.h"
-#include "service_account_util.h"
 
 using google::assistant::embedded::v1alpha1::EmbeddedAssistant;
 using google::assistant::embedded::v1alpha1::ConverseRequest;
@@ -58,7 +57,6 @@ using grpc::Channel;
 using grpc::ClientReaderWriter;
 
 static const std::string kCredentialsTypeUserAccount = "USER_ACCOUNT";
-static const std::string kCredentialsTypeServiceAccount = "SERVICE_ACCOUNT";
 static const std::string kALSAAudioInput = "ALSA_INPUT";
 
 // Creates a channel to be connected to Google.
@@ -83,8 +81,7 @@ void PrintUsage() {
   std::cerr << "Usage: ./run_assistant "
             << "--audio_input <" << kALSAAudioInput << "|<audio_file>] "
             << "--credentials_file <credentials_file> "
-            << "--credentials_type <" << kCredentialsTypeUserAccount << "|"
-            << kCredentialsTypeServiceAccount << "> "
+            << "--credentials_type <" << kCredentialsTypeUserAccount << "> "
             << "[--api_endpoint <API endpoint>]" << std::endl;
 }
 
@@ -116,12 +113,10 @@ bool GetCommandLineFlags(
         break;
       case 't':
         *credentials_type = optarg;
-        if (*credentials_type != kCredentialsTypeUserAccount
-            && *credentials_type != kCredentialsTypeServiceAccount) {
+        if (*credentials_type != kCredentialsTypeUserAccount) {
           std::cerr << "Invalid credentials_type: \"" << *credentials_type
                     << "\". Should be \"" << kCredentialsTypeUserAccount
-                    << "\" or \"" << kCredentialsTypeServiceAccount << "\""
-                    << std::endl;
+                    << "\"" << std::endl;
           return false;
         }
         break;
@@ -175,11 +170,7 @@ int main(int argc, char** argv) {
   credentials_buffer << credentials_file.rdbuf();
   std::string credentials = credentials_buffer.str();
   std::shared_ptr<CallCredentials> call_credentials;
-  if (credentials_type == kCredentialsTypeServiceAccount) {
-    call_credentials = GetServiceAccountCredentialsOrNull(credentials);
-  } else {
-    call_credentials = grpc::GoogleRefreshTokenCredentials(credentials);
-  }
+  call_credentials = grpc::GoogleRefreshTokenCredentials(credentials);
   if (call_credentials.get() == nullptr) {
     std::cerr << "Credentials file \"" << credentials_file_path
               << "\" is invalid. Check step 5 in README for how to get valid "
@@ -199,9 +190,6 @@ int main(int argc, char** argv) {
   converse_config->mutable_audio_out_config()->set_encoding(
       AudioOutConfig::LINEAR16);
   converse_config->mutable_audio_out_config()->set_sample_rate_hertz(16000);
-  if (credentials_type == kCredentialsTypeServiceAccount) {
-    converse_config->mutable_converse_state()->set_is_signed_out_mode(true);
-  }
 
   auto* converse_context =
       converse_config->mutable_converse_state()->mutable_context();

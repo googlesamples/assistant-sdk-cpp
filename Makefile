@@ -55,7 +55,7 @@ googleapis.ar: $(GOOGLEAPIS_CCS:.cc=.o)
 run_assistant.o: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h)
 
 run_assistant: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
-	$(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/json_util.o ./src/service_account_util.o ./src/run_assistant.o 
+	$(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/json_util.o ./src/run_assistant.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 json_util_test: ./src/json_util.o ./src/json_util_test.o
