@@ -45,12 +45,12 @@ limitations under the License.
 #include "audio_input_file.h"
 #include "json_util.h"
 
-using google::assistant::embedded::v1alpha1::EmbeddedAssistant;
-using google::assistant::embedded::v1alpha1::ConverseRequest;
-using google::assistant::embedded::v1alpha1::ConverseResponse;
-using google::assistant::embedded::v1alpha1::AudioInConfig;
-using google::assistant::embedded::v1alpha1::AudioOutConfig;
-using google::assistant::embedded::v1alpha1::ConverseResponse_EventType_END_OF_UTTERANCE;
+using google::assistant::embedded::v1alpha2::EmbeddedAssistant;
+using google::assistant::embedded::v1alpha2::AssistRequest;
+using google::assistant::embedded::v1alpha2::AssistResponse;
+using google::assistant::embedded::v1alpha2::AudioInConfig;
+using google::assistant::embedded::v1alpha2::AudioOutConfig;
+using google::assistant::embedded::v1alpha2::AssistResponse_EventType_END_OF_UTTERANCE;
 
 using grpc::CallCredentials;
 using grpc::Channel;
@@ -58,6 +58,9 @@ using grpc::ClientReaderWriter;
 
 static const std::string kCredentialsTypeUserAccount = "USER_ACCOUNT";
 static const std::string kALSAAudioInput = "ALSA_INPUT";
+static const std::string kLanguageCode = "en-US";
+static const std::string kDeviceInstanceId = "default";
+static const std::string kDeviceModelId = "default";
 
 // Creates a channel to be connected to Google.
 std::shared_ptr<Channel> CreateChannel(const std::string& host) {
@@ -134,6 +137,9 @@ bool GetCommandLineFlags(
 int main(int argc, char** argv) {
   std::string audio_input_source, credentials_file_path, credentials_type,
               api_endpoint;
+  // Initialize gRPC and DNS resolvers
+  // https://github.com/grpc/grpc/issues/11366#issuecomment-328595941
+  grpc_init();
   if (!GetCommandLineFlags(argc, argv, &audio_input_source,
                            &credentials_file_path, &credentials_type,
                            &api_endpoint)) {
@@ -182,26 +188,28 @@ int main(int argc, char** argv) {
   std::unique_ptr<EmbeddedAssistant::Stub> assistant(
       EmbeddedAssistant::NewStub(channel));
 
-  ConverseRequest request;
-  auto* converse_config = request.mutable_config();
-  converse_config->mutable_audio_in_config()->set_encoding(
+  AssistRequest request;
+  auto* assist_config = request.mutable_config();
+  // Set the AudioInConfig of the AssistRequest
+  assist_config->mutable_audio_in_config()->set_encoding(
       AudioInConfig::LINEAR16);
-  converse_config->mutable_audio_in_config()->set_sample_rate_hertz(16000);
-  converse_config->mutable_audio_out_config()->set_encoding(
+  assist_config->mutable_audio_in_config()->set_sample_rate_hertz(16000);
+  assist_config->mutable_audio_out_config()->set_encoding(
       AudioOutConfig::LINEAR16);
-  converse_config->mutable_audio_out_config()->set_sample_rate_hertz(16000);
-
-  auto* converse_context =
-      converse_config->mutable_converse_state()->mutable_context();
-  converse_context->set_third_party_context("{'current_channel': 'News'}");
+  assist_config->mutable_audio_out_config()->set_sample_rate_hertz(16000);
+  // Set the DialogStateIn of the AssistRequest
+  assist_config->mutable_dialog_state_in()->set_language_code(kLanguageCode);
+  // Set the DeviceConfig of the AssistRequest
+  assist_config->mutable_device_config()->set_device_id(kDeviceInstanceId);
+  assist_config->mutable_device_config()->set_device_model_id(kDeviceModelId);
 
   // Begin a stream.
   grpc::ClientContext context;
   context.set_fail_fast(false);
   context.set_credentials(call_credentials);
 
-  std::shared_ptr<ClientReaderWriter<ConverseRequest, ConverseResponse>>
-      stream(std::move(assistant->Converse(&context)));
+  std::shared_ptr<ClientReaderWriter<AssistRequest, AssistResponse>>
+      stream(std::move(assistant->Assist(&context)));
   // Write config in first stream.
   std::cout << "assistant_sdk wrote first request: "
             << request.ShortDebugString() << std::endl;
@@ -224,12 +232,12 @@ int main(int argc, char** argv) {
 
   // Read responses.
   std::cout << "assistant_sdk waiting for response ... " << std::endl;
-  ConverseResponse response;
+  AssistResponse response;
   while (stream->Read(&response)) {  // Returns false when no more to read.
     std::cout << "assistant_sdk Got a response \n";
 
-    if ((response.has_error() || response.has_audio_out() ||
-        response.event_type() == ConverseResponse_EventType_END_OF_UTTERANCE)
+    if ((response.has_audio_out() ||
+        response.event_type() == AssistResponse_EventType_END_OF_UTTERANCE)
         && audio_input->IsRunning()) {
       // Synchronously stops audio input.
       audio_input->Stop();
@@ -247,10 +255,14 @@ int main(int argc, char** argv) {
       audio_output.Send(data);
 #endif
     }
-    if (response.has_interim_spoken_request_text()) {
-      // CUSTOMIZE: render interim spoken request on screen
+    // CUSTOMIZE: render spoken request on screen
+    for (int i = 0; i < response.speech_results_size(); i++) {
+      google::assistant::embedded::v1alpha2::SpeechRecognitionResult result =
+          response.speech_results(i);
       std::cout << "assistant_sdk response: \n"
-                << response.ShortDebugString() << std::endl;
+                << result.transcript() << " ("
+                << std::to_string(result.stability())
+                << ")" << std::endl;
     }
   }
 

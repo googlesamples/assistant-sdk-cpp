@@ -89,7 +89,7 @@ For end-user's credentials:
 ./run_assistant --audio_input ./resources/switch_to_channel_5.raw --credentials_file ./credentials.json --credentials_type USER_ACCOUNT
 ```
 
-On Linux workstation, you can alternatively use ALSA audio input:
+On a Linux workstation, you can alternatively use ALSA for audio input:
 ```
 ./run_assistant --audio_input ALSA_INPUT --credentials_file ./credentials.json --credentials_type USER_ACCOUNT
 ```

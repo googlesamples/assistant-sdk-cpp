@@ -16,10 +16,12 @@ GOOGLEAPIS_GENS_PATH ?= ./googleapis/gens
 PROTO_PATH = ./proto
 GOOGLEAPIS_API_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/api \
 	-name '*.pb.cc')
+GOOGLEAPIS_TYPE_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/type \
+	-name '*.pb.cc')
 GOOGLEAPIS_RPC_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/rpc \
 	-name '*.pb.cc')
 
-GOOGLEAPIS_CCS = $(GOOGLEAPIS_API_CCS) $(GOOGLEAPIS_RPC_CCS)
+GOOGLEAPIS_CCS = $(GOOGLEAPIS_API_CCS) $(GOOGLEAPIS_RPC_CCS) $(GOOGLEAPIS_TYPE_CCS)
 
 GOOGLEAPIS_ASSISTANT_CCS = ./src/embedded_assistant.pb.cc ./src/embedded_assistant.grpc.pb.cc
 

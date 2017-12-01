@@ -1,2 +1,12 @@
 grpc/
 googleapis/
+src/*.o
+# Do not commit private credentials
+client_secret_*.json
+client_secret.json
+credentials.json
+# Do not commit binaries
+googleapis.ar
+run_assistant
+# Generated files
+src/embedded_assistant*
