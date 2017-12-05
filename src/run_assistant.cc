@@ -262,11 +262,8 @@ int main(int argc, char** argv) {
   std::cout << "assistant_sdk waiting for response ... " << std::endl;
   AssistResponse response;
   while (stream->Read(&response)) {  // Returns false when no more to read.
-    std::cout << "assistant_sdk Got a response \n";
-
     if ((response.has_audio_out() ||
         response.event_type() == AssistResponse_EventType_END_OF_UTTERANCE)
-        && audio_input != nullptr
         && audio_input->IsRunning()) {
       // Synchronously stops audio input if there is one.
       audio_input->Stop();
@@ -274,7 +271,6 @@ int main(int argc, char** argv) {
 
     if (response.has_audio_out()) {
       // CUSTOMIZE: play back audio_out here.
-      std::cout << "assistant_sdk play back audio data here." << std::endl;
 #ifdef ENABLE_ALSA
       std::shared_ptr<std::vector<unsigned char>>
           data(new std::vector<unsigned char>);
@@ -288,10 +284,16 @@ int main(int argc, char** argv) {
     for (int i = 0; i < response.speech_results_size(); i++) {
       google::assistant::embedded::v1alpha2::SpeechRecognitionResult result =
           response.speech_results(i);
-      std::cout << "assistant_sdk response: \n"
+      std::cout << "assistant_sdk request: \n"
                 << result.transcript() << " ("
                 << std::to_string(result.stability())
                 << ")" << std::endl;
+    }
+    if (response.dialog_state_out().supplemental_display_text().size() > 0) {
+      // CUSTOMIZE: render spoken response on screen
+      std::cout << "assistant_sdk display text: \n"
+                << response.dialog_state_out().supplemental_display_text()
+                << std::endl;
     }
   }
 

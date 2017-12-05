@@ -86,7 +86,7 @@ For end-user's credentials:
 
 7. Start `run_assistant`
 ```
-./run_assistant --audio_input ./resources/switch_to_channel_5.raw --credentials_file ./credentials.json --credentials_type USER_ACCOUNT
+./run_assistant --audio_input ./resources/weather_in_mountain_view.raw --credentials_file ./credentials.json --credentials_type USER_ACCOUNT
 ```
 
 On a Linux workstation, you can alternatively use ALSA for audio input:
