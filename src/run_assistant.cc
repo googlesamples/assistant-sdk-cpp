@@ -62,6 +62,8 @@ static const std::string kLanguageCode = "en-US";
 static const std::string kDeviceInstanceId = "default";
 static const std::string kDeviceModelId = "default";
 
+bool verbose = false;
+
 // Creates a channel to be connected to Google.
 std::shared_ptr<Channel> CreateChannel(const std::string& host) {
   std::ifstream file("robots.pem");
@@ -69,13 +71,16 @@ std::shared_ptr<Channel> CreateChannel(const std::string& host) {
   buffer << file.rdbuf();
   std::string roots_pem = buffer.str();
 
-  std::cout << "assistant_sdk robots_pem: " << roots_pem << std::endl;
+  if (verbose) {
+    std::clog << "assistant_sdk robots_pem: " << roots_pem << std::endl;
+  }
   ::grpc::SslCredentialsOptions ssl_opts = {roots_pem, "", ""};
   auto creds = ::grpc::SslCredentials(ssl_opts);
   std::string server = host + ":443";
-  std::cout << "assistant_sdk CreateCustomChannel(" << server << ", creds, arg)"
-
+  if (verbose) {
+    std::clog << "assistant_sdk CreateCustomChannel(" << server << ", creds, arg)"
       << std::endl << std::endl;
+  }
   ::grpc::ChannelArguments channel_args;
   return CreateCustomChannel(server, creds, channel_args);
 }
@@ -101,13 +106,14 @@ bool GetCommandLineFlags(
     {"credentials_type", required_argument, nullptr, 'c'},
     {"api_endpoint",     required_argument, nullptr, 'e'},
     {"locale",           required_argument, nullptr, 'l'},
+    {"verbose",          no_argument, nullptr, 'v'},
     {nullptr, 0, nullptr, 0}
   };
   *api_endpoint = ASSISTANT_ENDPOINT;
   while (true) {
     int option_index;
     int option_char =
-        getopt_long(argc, argv, "i:t:f:c:e:l", long_options, &option_index);
+        getopt_long(argc, argv, "i:t:f:c:e:l:v", long_options, &option_index);
     if (option_char == -1) {
       break;
     }
@@ -134,6 +140,9 @@ bool GetCommandLineFlags(
         break;
       case 'l':
         *locale = optarg;
+        break;
+      case 'v':
+        verbose = true;
         break;
       default:
         PrintUsage();
@@ -219,8 +228,10 @@ int main(int argc, char** argv) {
   std::shared_ptr<ClientReaderWriter<AssistRequest, AssistResponse>>
       stream(std::move(assistant->Assist(&context)));
   // Write config in first stream.
-  std::cout << "assistant_sdk wrote first request: "
-            << request.ShortDebugString() << std::endl;
+  if (verbose) {
+    std::clog << "assistant_sdk wrote first request: "
+              << request.ShortDebugString() << std::endl;
+  }
   stream->Write(request);
 
   if (!audio_input_source.empty()) {
@@ -259,8 +270,13 @@ int main(int argc, char** argv) {
 #endif
 
   // Read responses.
-  std::cout << "assistant_sdk waiting for response ... " << std::endl;
+  if (verbose) {
+    std::clog << "assistant_sdk waiting for response ... " << std::endl;
+  }
   AssistResponse response;
+  if (verbose) {
+    std::clog << "assistant_sdk Got a response \n";
+  }
   while (stream->Read(&response)) {  // Returns false when no more to read.
     if ((response.has_audio_out() ||
         response.event_type() == AssistResponse_EventType_END_OF_UTTERANCE)
@@ -284,15 +300,17 @@ int main(int argc, char** argv) {
     for (int i = 0; i < response.speech_results_size(); i++) {
       google::assistant::embedded::v1alpha2::SpeechRecognitionResult result =
           response.speech_results(i);
-      std::cout << "assistant_sdk request: \n"
-                << result.transcript() << " ("
-                << std::to_string(result.stability())
-                << ")" << std::endl;
+      if (verbose) {
+        std::clog << "assistant_sdk request: \n"
+                  << result.transcript() << " ("
+                  << std::to_string(result.stability())
+                  << ")" << std::endl;
+      }
     }
     if (response.dialog_state_out().supplemental_display_text().size() > 0) {
       // CUSTOMIZE: render spoken response on screen
-      std::cout << "assistant_sdk display text: \n"
-                << response.dialog_state_out().supplemental_display_text()
+      std::clog << "assistant_sdk response:" << std::endl;
+      std::cout << response.dialog_state_out().supplemental_display_text()
                 << std::endl;
     }
   }
