@@ -104,7 +104,6 @@ bool AudioOutputALSA::Start() {
     snd_pcm_drain(pcm_handle);
     snd_pcm_close(pcm_handle);
   }));
-  std::cout << "AudioOutputALSA Start() succeeded" << std::endl;
   return true;
 }
 
@@ -118,7 +117,6 @@ void AudioOutputALSA::Stop() {
   isRunning = false;
   alsaThread->join();
   alsaThread.reset(nullptr);
-  std::cout << "AudioOutputALSA Stop() succeeded" << std::endl;
 }
 
 void AudioOutputALSA::Send(std::shared_ptr<std::vector<unsigned char>> data) {
