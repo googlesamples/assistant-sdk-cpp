@@ -37,8 +37,8 @@ limitations under the License.
 #include "audio_output_alsa.h"
 #endif
 
-#include "embedded_assistant.pb.h"
-#include "embedded_assistant.grpc.pb.h"
+#include "google/assistant/embedded/v1alpha2/embedded_assistant.pb.h"
+#include "google/assistant/embedded/v1alpha2/embedded_assistant.grpc.pb.h"
 
 #include "assistant_config.h"
 #include "audio_input.h"

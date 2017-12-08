@@ -13,8 +13,9 @@
 # limitations under the License.
 GRPC_SRC_PATH ?= ./grpc
 GOOGLEAPIS_GENS_PATH ?= ./googleapis/gens
-PROTO_PATH = ./proto
 GOOGLEAPIS_API_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/api \
+	-name '*.pb.cc')
+GOOGLEAPIS_ASSISTANT_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/assistant/embedded/v1alpha2 \
 	-name '*.pb.cc')
 GOOGLEAPIS_TYPE_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/type \
 	-name '*.pb.cc')
@@ -23,7 +24,8 @@ GOOGLEAPIS_RPC_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/rpc \
 
 GOOGLEAPIS_CCS = $(GOOGLEAPIS_API_CCS) $(GOOGLEAPIS_RPC_CCS) $(GOOGLEAPIS_TYPE_CCS)
 
-GOOGLEAPIS_ASSISTANT_CCS = ./src/embedded_assistant.pb.cc ./src/embedded_assistant.grpc.pb.cc
+GOOGLEAPIS_ASSISTANT_CCS = ./googleapis/gens/google/assistant/embedded/v1alpha2/embedded_assistant.pb.cc \
+	./googleapis/gens/google/assistant/embedded/v1alpha2/embedded_assistant.grpc.pb.cc
 
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
@@ -64,7 +66,7 @@ json_util_test: ./src/json_util.o ./src/json_util_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS):
-	protoc -I=$(PROTO_PATH) --proto_path=.:$(GOOGLEAPIS_GENS_PATH)/..:$(PROTO_PATH):/usr/local/include \
+	protoc -I=$(PROTO_PATH) --proto_path=.:$(GOOGLEAPIS_GENS_PATH)/..:/usr/local/include \
 	--cpp_out=./src --grpc_out=./src --plugin=protoc-gen-grpc=/usr/local/bin/grpc_cpp_plugin $(PROTO_PATH)/embedded_assistant.proto $^
 
 protobufs: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS)
