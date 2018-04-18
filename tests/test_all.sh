@@ -10,3 +10,4 @@ set -x
 # After building, run end-to-end tests
 ./tests/integration_en_us.sh
 ./tests/integration_fr.sh
+./tests/integration_audio.sh
