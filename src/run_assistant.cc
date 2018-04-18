@@ -278,13 +278,13 @@ int main(int argc, char** argv) {
     std::clog << "assistant_sdk Got a response \n";
   }
   while (stream->Read(&response)) {  // Returns false when no more to read.
-    if ((response.has_audio_out() ||
-        response.event_type() == AssistResponse_EventType_END_OF_UTTERANCE)
-        && audio_input->IsRunning()) {
+    if (response.has_audio_out() ||
+        response.event_type() == AssistResponse_EventType_END_OF_UTTERANCE) {
       // Synchronously stops audio input if there is one.
-      audio_input->Stop();
+      if (audio_input != nullptr && audio_input->IsRunning()) {
+        audio_input->Stop();
+      }
     }
-
     if (response.has_audio_out()) {
       // CUSTOMIZE: play back audio_out here.
 #ifdef ENABLE_ALSA
@@ -326,5 +326,6 @@ int main(int argc, char** argv) {
               status.error_message() << std::endl;
     return -1;
   }
+
   return 0;
 }
