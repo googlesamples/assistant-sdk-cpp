@@ -92,14 +92,21 @@ On a Linux workstation, you can alternatively use ALSA for audio input:
 ./run_assistant --audio_input ALSA_INPUT --credentials_file ./credentials.json
 ```
 
-You can use a text-based query instead of audio:
+You can use a text-based query instead of audio. This allows you to continually enter text queries to the Assistant.
 ```
-./run_assistant --text_input "What time is it?" --credentials_file ./credentials.json
+./run_assistant --text_input --credentials_file ./credentials.json --credentials_type USER_ACCOUNT
+```
+
+This takes input from `cin`, so you can send data to the program when it starts.
+
+```
+echo "what time is it" | ./run_assistant --text_input --credentials_file ./credentials.json --credentials_type USER_ACCOUNT
 ```
 
 To change the locale, include a `locale` parameter:
+
 ```
-./run_assistant --text_input "Bonjour" --credentials_file ./credentials.json --locale "fr-FR"
+echo "Bonjour" | ./run_assistant --text_input --credentials_file ./credentials.json --credentials_type USER_ACCOUNT --locale "fr-FR"
 ```
 
 Default Assistant gRPC API endpoint is embeddedassistant.googleapis.com. If you want to test with a custom Assistant gRPC API endpoint, you can pass an extra "--api_endpoint CUSTOM_API_ENDPOINT" to run_assistant.

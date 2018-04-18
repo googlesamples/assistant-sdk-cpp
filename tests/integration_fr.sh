@@ -4,6 +4,6 @@
 set -e
 set -x
 
-./run_assistant --text_input "comment dit-on bonjour en español" \
+echo "comment dit-on bonjour en español" | ./run_assistant --text_input \
   --credentials_file ./credentials.json --credentials_type USER_ACCOUNT \
   --locale "fr-FR" --verbose | grep "Buenos dias"

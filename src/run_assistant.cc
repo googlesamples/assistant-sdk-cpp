@@ -62,6 +62,7 @@ static const std::string kDeviceInstanceId = "default";
 static const std::string kDeviceModelId = "default";
 
 bool verbose = false;
+bool use_text = false; // Alternatively use text
 
 // Creates a channel to be connected to Google.
 std::shared_ptr<Channel> CreateChannel(const std::string& host) {
@@ -86,7 +87,7 @@ std::shared_ptr<Channel> CreateChannel(const std::string& host) {
 
 void PrintUsage() {
   std::cerr << "Usage: ./run_assistant "
-            << "[--audio_input [<" << kALSAAudioInput << ">|<audio_file>] OR --text_input <string>] "
+            << "[--audio_input [<" << kALSAAudioInput << ">|<audio_file>] OR --text_input] "
             << "--credentials_file <credentials_file> "
             << "[--credentials_type <" << kCredentialsTypeUserAccount << ">] "
             << "[--api_endpoint <API endpoint>] "
@@ -95,12 +96,12 @@ void PrintUsage() {
 }
 
 bool GetCommandLineFlags(
-    int argc, char** argv, std::string* audio_input, std::string* text_input,
-    std::string* credentials_file_path, std::string* credentials_type,
-    std::string* api_endpoint, std::string* locale) {
+    int argc, char** argv, std::string* audio_input, std::string* credentials_file_path,
+    std::string* credentials_type, std::string* api_endpoint,
+    std::string* locale) {
   const struct option long_options[] = {
-    {"audio_input",      required_argument, nullptr, 'i'},
-    {"text_input",       required_argument, nullptr, 't'},
+    {"audio_input",      required_argument, nullptr, 'a'},
+    {"text_input",       no_argument, nullptr, 't'},
     {"credentials_file", required_argument, nullptr, 'f'},
     {"credentials_type", required_argument, nullptr, 'c'},
     {"api_endpoint",     required_argument, nullptr, 'e'},
@@ -112,16 +113,17 @@ bool GetCommandLineFlags(
   while (true) {
     int option_index;
     int option_char =
-        getopt_long(argc, argv, "i:t:f:c:e:l:v", long_options, &option_index);
+        getopt_long(argc, argv, "a:t:f:c:e:l:v", long_options, &option_index);
     if (option_char == -1) {
       break;
     }
     switch (option_char) {
-      case 'i':
+      case 'a':
         *audio_input = optarg;
         break;
       case 't':
-        *text_input = optarg;
+        use_text = true;
+        break;
       case 'f':
         *credentials_file_path = optarg;
         break;
@@ -157,9 +159,8 @@ int main(int argc, char** argv) {
   // Initialize gRPC and DNS resolvers
   // https://github.com/grpc/grpc/issues/11366#issuecomment-328595941
   grpc_init();
-  if (!GetCommandLineFlags(argc, argv, &audio_input_source, &text_input_source,
-                           &credentials_file_path, &credentials_type,
-                           &api_endpoint, &locale)) {
+  if (!GetCommandLineFlags(argc, argv, &audio_input_source, &credentials_file_path,
+                          &credentials_type, &api_endpoint, &locale)) {
     return -1;
   }
 
@@ -167,167 +168,188 @@ int main(int argc, char** argv) {
     credentials_type = kCredentialsTypeUserAccount; // Default is USER_ACCOUNT
   }
 
-  // Create an AssistRequest
-  AssistRequest request;
-  auto* assist_config = request.mutable_config();
+  while (true) {
+      if (use_text) {
+        // Take in any text
+        std::clog << ": " << std::endl;
+        std::getline(std::cin, text_input_source);
+        // Take in any text
+        if (text_input_source.empty()) {
+          // Input is empty. This can happen if the user entered
+          // no text or if the input source is through a terminal
+          // pipe. In either case, this will be interpreted as
+          // an exit condition.
+          return 0;
+        }
+      }
+    // Create an AssistRequest
+    AssistRequest request;
+    auto* assist_config = request.mutable_config();
 
-  if (locale.empty()) {
-    locale = kLanguageCode; // Default locale
-  }
-  std::cout << "Using locale " << locale << std::endl;
-  // Set the DialogStateIn of the AssistRequest
-  assist_config->mutable_dialog_state_in()->set_language_code(locale);
+    if (locale.empty()) {
+      locale = kLanguageCode; // Default locale
+    }
+    if (verbose) {
+      std::clog << "Using locale " << locale << std::endl;
+    }
+    // Set the DialogStateIn of the AssistRequest
+    assist_config->mutable_dialog_state_in()->set_language_code(locale);
 
-  // Set the DeviceConfig of the AssistRequest
-  assist_config->mutable_device_config()->set_device_id(kDeviceInstanceId);
-  assist_config->mutable_device_config()->set_device_model_id(kDeviceModelId);
+    // Set the DeviceConfig of the AssistRequest
+    assist_config->mutable_device_config()->set_device_id(kDeviceInstanceId);
+    assist_config->mutable_device_config()->set_device_model_id(kDeviceModelId);
 
-  // Set parameters for audio output
-  assist_config->mutable_audio_out_config()->set_encoding(
-    AudioOutConfig::LINEAR16);
-  assist_config->mutable_audio_out_config()->set_sample_rate_hertz(16000);
+    // Set parameters for audio output
+    assist_config->mutable_audio_out_config()->set_encoding(
+      AudioOutConfig::LINEAR16);
+    assist_config->mutable_audio_out_config()->set_sample_rate_hertz(16000);
 
-  std::unique_ptr<AudioInput> audio_input;
-  if (!audio_input_source.empty()) {
-    // Set the AudioInConfig of the AssistRequest
-    assist_config->mutable_audio_in_config()->set_encoding(
-      AudioInConfig::LINEAR16);
-    assist_config->mutable_audio_in_config()->set_sample_rate_hertz(16000);
-  } else if (!text_input_source.empty()) {
-    assist_config->set_text_query(text_input_source);
-  } else {
-    std::cerr << "requires either --audio_input or --text_input" << std::endl;
-    return -1;
-  }
-
-  // Read credentials file.
-  std::ifstream credentials_file(credentials_file_path);
-  if (!credentials_file) {
-    std::cerr << "Credentials file \"" << credentials_file_path
-              << "\" does not exist." << std::endl;
-    return -1;
-  }
-  std::stringstream credentials_buffer;
-  credentials_buffer << credentials_file.rdbuf();
-  std::string credentials = credentials_buffer.str();
-  std::shared_ptr<CallCredentials> call_credentials;
-  call_credentials = grpc::GoogleRefreshTokenCredentials(credentials);
-  if (call_credentials.get() == nullptr) {
-    std::cerr << "Credentials file \"" << credentials_file_path
-              << "\" is invalid. Check step 5 in README for how to get valid "
-              << "credentials." << std::endl;
-    return -1;
-  }
-
-  // Begin a stream.
-  auto channel = CreateChannel(api_endpoint);
-  std::unique_ptr<EmbeddedAssistant::Stub> assistant(
-      EmbeddedAssistant::NewStub(channel));
-
-  grpc::ClientContext context;
-  context.set_fail_fast(false);
-  context.set_credentials(call_credentials);
-
-  std::shared_ptr<ClientReaderWriter<AssistRequest, AssistResponse>>
-      stream(std::move(assistant->Assist(&context)));
-  // Write config in first stream.
-  if (verbose) {
-    std::clog << "assistant_sdk wrote first request: "
-              << request.ShortDebugString() << std::endl;
-  }
-  stream->Write(request);
-
-  if (!audio_input_source.empty()) {
-    if (audio_input_source == kALSAAudioInput) {
-#ifdef ENABLE_ALSA
-        audio_input.reset(new AudioInputALSA());
-#else
-        std::cerr << "ALSA audio input is not supported on this platform."
-                  << std::endl;
-        return -1;
-#endif
+    std::unique_ptr<AudioInput> audio_input;
+    if (!audio_input_source.empty()) {
+      // Set the AudioInConfig of the AssistRequest
+      assist_config->mutable_audio_in_config()->set_encoding(
+        AudioInConfig::LINEAR16);
+      assist_config->mutable_audio_in_config()->set_sample_rate_hertz(16000);
+    } else if (!text_input_source.empty()) {
+      assist_config->set_text_query(text_input_source);
     } else {
-      std::ifstream audio_file(audio_input_source);
-      if (!audio_file) {
-        std::cerr << "Audio input file \"" << audio_input_source
-                  << "\" does not exist." << std::endl;
-        return -1;
+      std::cerr << "requires either --audio_input or --text_input" << std::endl;
+      return -1;
+    }
+
+    // Read credentials file.
+    std::ifstream credentials_file(credentials_file_path);
+    if (!credentials_file) {
+      std::cerr << "Credentials file \"" << credentials_file_path
+                << "\" does not exist." << std::endl;
+      return -1;
+    }
+    std::stringstream credentials_buffer;
+    credentials_buffer << credentials_file.rdbuf();
+    std::string credentials = credentials_buffer.str();
+    std::shared_ptr<CallCredentials> call_credentials;
+    call_credentials = grpc::GoogleRefreshTokenCredentials(credentials);
+    if (call_credentials.get() == nullptr) {
+      std::cerr << "Credentials file \"" << credentials_file_path
+                << "\" is invalid. Check step 5 in README for how to get valid "
+                << "credentials." << std::endl;
+      return -1;
+    }
+
+    // Begin a stream.
+    auto channel = CreateChannel(api_endpoint);
+    std::unique_ptr<EmbeddedAssistant::Stub> assistant(
+        EmbeddedAssistant::NewStub(channel));
+
+    grpc::ClientContext context;
+    context.set_fail_fast(false);
+    context.set_credentials(call_credentials);
+
+    std::shared_ptr<ClientReaderWriter<AssistRequest, AssistResponse>>
+        stream(std::move(assistant->Assist(&context)));
+    // Write config in first stream.
+    if (verbose) {
+      std::clog << "assistant_sdk wrote first request: "
+                << request.ShortDebugString() << std::endl;
+    }
+    stream->Write(request);
+
+    if (!audio_input_source.empty()) {
+      if (audio_input_source == kALSAAudioInput) {
+  #ifdef ENABLE_ALSA
+          audio_input.reset(new AudioInputALSA());
+  #else
+          std::cerr << "ALSA audio input is not supported on this platform."
+                    << std::endl;
+          return -1;
+  #endif
+      } else {
+        std::ifstream audio_file(audio_input_source);
+        if (!audio_file) {
+          std::cerr << "Audio input file \"" << audio_input_source
+                    << "\" does not exist." << std::endl;
+          return -1;
+        }
+        audio_input.reset(new AudioInputFile(audio_input_source));
       }
-      audio_input.reset(new AudioInputFile(audio_input_source));
+
+      audio_input->AddDataListener(
+        [stream, &request](std::shared_ptr<std::vector<unsigned char>> data) {
+          request.set_audio_in(&((*data)[0]), data->size());
+          stream->Write(request);
+      });
+      audio_input->AddStopListener([stream]() {
+        stream->WritesDone();
+      });
+      audio_input->Start();
     }
 
-    audio_input->AddDataListener(
-      [stream, &request](std::shared_ptr<std::vector<unsigned char>> data) {
-        request.set_audio_in(&((*data)[0]), data->size());
-        stream->Write(request);
-    });
-    audio_input->AddStopListener([stream]() {
-      stream->WritesDone();
-    });
-    audio_input->Start();
-  }
+  #ifdef ENABLE_ALSA
+    AudioOutputALSA audio_output;
+    audio_output.Start();
+  #endif
 
-#ifdef ENABLE_ALSA
-  AudioOutputALSA audio_output;
-  audio_output.Start();
-#endif
-
-  // Read responses.
-  if (verbose) {
-    std::clog << "assistant_sdk waiting for response ... " << std::endl;
-  }
-  AssistResponse response;
-  if (verbose) {
-    std::clog << "assistant_sdk Got a response \n";
-  }
-  while (stream->Read(&response)) {  // Returns false when no more to read.
-    if (response.has_audio_out() ||
-        response.event_type() == AssistResponse_EventType_END_OF_UTTERANCE) {
-      // Synchronously stops audio input if there is one.
-      if (audio_input != nullptr && audio_input->IsRunning()) {
-        audio_input->Stop();
+    // Read responses.
+    if (verbose) {
+      std::clog << "assistant_sdk waiting for response ... " << std::endl;
+    }
+    AssistResponse response;
+    while (stream->Read(&response)) {  // Returns false when no more to read.
+      if (response.has_audio_out() ||
+          response.event_type() == AssistResponse_EventType_END_OF_UTTERANCE) {
+        // Synchronously stops audio input if there is one.
+        if (audio_input != nullptr && audio_input->IsRunning()) {
+          audio_input->Stop();
+        }
+      }
+      if (response.has_audio_out()) {
+        // CUSTOMIZE: play back audio_out here.
+  #ifdef ENABLE_ALSA
+        std::shared_ptr<std::vector<unsigned char>>
+            data(new std::vector<unsigned char>);
+        data->resize(response.audio_out().audio_data().length());
+        memcpy(&((*data)[0]), response.audio_out().audio_data().c_str(),
+            response.audio_out().audio_data().length());
+        audio_output.Send(data);
+  #endif
+      }
+      // CUSTOMIZE: render spoken request on screen
+      for (int i = 0; i < response.speech_results_size(); i++) {
+        google::assistant::embedded::v1alpha2::SpeechRecognitionResult result =
+            response.speech_results(i);
+        if (verbose) {
+          std::clog << "assistant_sdk request: \n"
+                    << result.transcript() << " ("
+                    << std::to_string(result.stability())
+                    << ")" << std::endl;
+        }
+      }
+      if (response.dialog_state_out().supplemental_display_text().size() > 0) {
+        // CUSTOMIZE: render spoken response on screen
+        std::clog << "assistant_sdk response:" << std::endl;
+        std::cout << response.dialog_state_out().supplemental_display_text()
+                  << std::endl;
       }
     }
-    if (response.has_audio_out()) {
-      // CUSTOMIZE: play back audio_out here.
-#ifdef ENABLE_ALSA
-      std::shared_ptr<std::vector<unsigned char>>
-          data(new std::vector<unsigned char>);
-      data->resize(response.audio_out().audio_data().length());
-      memcpy(&((*data)[0]), response.audio_out().audio_data().c_str(),
-          response.audio_out().audio_data().length());
-      audio_output.Send(data);
-#endif
-    }
-    // CUSTOMIZE: render spoken request on screen
-    for (int i = 0; i < response.speech_results_size(); i++) {
-      google::assistant::embedded::v1alpha2::SpeechRecognitionResult result =
-          response.speech_results(i);
-      if (verbose) {
-        std::clog << "assistant_sdk request: \n"
-                  << result.transcript() << " ("
-                  << std::to_string(result.stability())
-                  << ")" << std::endl;
-      }
-    }
-    if (response.dialog_state_out().supplemental_display_text().size() > 0) {
-      // CUSTOMIZE: render spoken response on screen
-      std::clog << "assistant_sdk response:" << std::endl;
-      std::cout << response.dialog_state_out().supplemental_display_text()
-                << std::endl;
-    }
-  }
 
-#ifdef ENABLE_ALSA
-  audio_output.Stop();
-#endif
+  #ifdef ENABLE_ALSA
+    audio_output.Stop();
+  #endif
 
-  grpc::Status status = stream->Finish();
-  if (!status.ok()) {
-    // Report the RPC failure.
-    std::cerr << "assistant_sdk failed, error: " <<
-              status.error_message() << std::endl;
-    return -1;
+    grpc::Status status = stream->Finish();
+    if (!status.ok()) {
+      // Report the RPC failure.
+      std::cerr << "assistant_sdk failed, error: " <<
+                status.error_message() << std::endl;
+      return -1;
+    }
+
+    if (!use_text && audio_input_source != kALSAAudioInput) {
+      // A filepath was used as the audio input to this program
+      // If this is the case, then we can stop the program after
+      // one turn.
+      return 0;
+    }
   }
 
   return 0;
