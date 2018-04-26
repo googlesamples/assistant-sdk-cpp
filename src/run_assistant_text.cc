@@ -34,6 +34,7 @@ limitations under the License.
 #include "assistant_config.h"
 #include "audio_input.h"
 #include "audio_input_file.h"
+#include "base64_encode.h"
 #include "json_util.h"
 
 using google::assistant::embedded::v1alpha2::EmbeddedAssistant;
@@ -41,6 +42,7 @@ using google::assistant::embedded::v1alpha2::AssistRequest;
 using google::assistant::embedded::v1alpha2::AssistResponse;
 using google::assistant::embedded::v1alpha2::AudioInConfig;
 using google::assistant::embedded::v1alpha2::AudioOutConfig;
+using google::assistant::embedded::v1alpha2::ScreenOutConfig;
 using google::assistant::embedded::v1alpha2::AssistResponse_EventType_END_OF_UTTERANCE;
 
 using grpc::CallCredentials;
@@ -49,8 +51,8 @@ using grpc::ClientReaderWriter;
 
 static const std::string kCredentialsTypeUserAccount = "USER_ACCOUNT";
 static const std::string kLanguageCode = "en-US";
-static const std::string kDeviceInstanceId = "default";
 static const std::string kDeviceModelId = "default";
+static const std::string kDeviceInstanceId = "default";
 
 bool verbose = false;
 
@@ -80,24 +82,26 @@ void PrintUsage() {
             << "--credentials <credentials_file> "
             << "[--api_endpoint <API endpoint>] "
             << "[--locale <locale>]"
+            << "[--html_out <command to load HTML file>]"
             << std::endl;
 }
 
 bool GetCommandLineFlags(
     int argc, char** argv, std::string* credentials_file_path,
-    std::string* api_endpoint, std::string* locale) {
+    std::string* api_endpoint, std::string* locale, std::string* html_out_command) {
   const struct option long_options[] = {
     {"credentials", required_argument, nullptr, 'c'},
     {"api_endpoint",     required_argument, nullptr, 'e'},
     {"locale",           required_argument, nullptr, 'l'},
     {"verbose",          no_argument, nullptr, 'v'},
+    {"html_out",         required_argument, nullptr, 'h'},
     {nullptr, 0, nullptr, 0}
   };
   *api_endpoint = ASSISTANT_ENDPOINT;
   while (true) {
     int option_index;
     int option_char =
-        getopt_long(argc, argv, "c:e:l:v", long_options, &option_index);
+        getopt_long(argc, argv, "c:e:l:v:h", long_options, &option_index);
     if (option_char == -1) {
       break;
     }
@@ -114,6 +118,9 @@ bool GetCommandLineFlags(
       case 'v':
         verbose = true;
         break;
+      case 'h':
+        *html_out_command = optarg;
+        break;
       default:
         PrintUsage();
         return false;
@@ -123,12 +130,12 @@ bool GetCommandLineFlags(
 }
 
 int main(int argc, char** argv) {
-  std::string credentials_file_path, api_endpoint, locale, text_input_source;
+  std::string credentials_file_path, api_endpoint, locale, text_input_source, html_out_command;
   // Initialize gRPC and DNS resolvers
   // https://github.com/grpc/grpc/issues/11366#issuecomment-328595941
   grpc_init();
   if (!GetCommandLineFlags(argc, argv, &credentials_file_path,
-                          &api_endpoint, &locale)) {
+                          &api_endpoint, &locale, &html_out_command)) {
     return -1;
   }
 
@@ -155,6 +162,11 @@ int main(int argc, char** argv) {
       AudioOutConfig::LINEAR16);
     assist_config->mutable_audio_out_config()->set_sample_rate_hertz(16000);
     assist_config->set_text_query(text_input_source);
+
+    // Set parameters for screen config
+    assist_config->mutable_screen_out_config()->set_screen_mode(
+      html_out_command.empty() ? ScreenOutConfig::SCREEN_MODE_UNSPECIFIED : ScreenOutConfig::PLAYING
+    );
 
     // Read credentials file.
     std::ifstream credentials_file(credentials_file_path);
@@ -210,11 +222,16 @@ int main(int argc, char** argv) {
                     << ")" << std::endl;
         }
       }
-      if (response.dialog_state_out().supplemental_display_text().size() > 0) {
-        // CUSTOMIZE: render spoken response on screen
-        std::clog << "assistant_sdk response:" << std::endl;
-        std::cout << response.dialog_state_out().supplemental_display_text()
-                  << std::endl;
+      if (!html_out_command.empty() && response.screen_out().data().size() > 0) {
+        std::string html_out_base64 = base64_encode(response.screen_out().data());
+        system((html_out_command + " \"data:text/html;base64, " + html_out_base64 + "\"").c_str());
+      } else if (html_out_command.empty()) {
+        if (response.dialog_state_out().supplemental_display_text().size() > 0) {
+          // CUSTOMIZE: render spoken response on screen
+          std::clog << "assistant_sdk response:" << std::endl;
+          std::cout << response.dialog_state_out().supplemental_display_text()
+                    << std::endl;
+        }
       }
     }
 

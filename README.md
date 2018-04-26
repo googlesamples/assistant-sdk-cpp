@@ -113,4 +113,16 @@ To change the locale, include a `locale` parameter:
 echo "Bonjour" | ./run_assistant_text --credentials ./credentials.json --locale "fr-FR"
 ```
 
-Default Assistant gRPC API endpoint is embeddedassistant.googleapis.com. If you want to test with a custom Assistant gRPC API endpoint, you can pass an extra "--api_endpoint CUSTOM_API_ENDPOINT" to run_assistant.
+Default Assistant gRPC API endpoint is `embeddedassistant.googleapis.com`. If you want to test with a custom Assistant gRPC API endpoint, you can pass `--api_endpoint CUSTOM_API_ENDPOINT`.
+
+## Enabling screen output
+
+To get a visual output from the Assistant, provide a command to be run alongside every step of the conversation. It will execute that command along along with a provided argument of a temporary HTML file.
+
+```bash
+echo "what time is it" | ./run_assistant_text --credentials ./credentials.json --html_out google-chrome
+```
+
+After you enter text, it will run `google-chrome /tmp/google-assistant-cpp-screen-out.html`.
+
+If you prefer a different program, use that argument instead.

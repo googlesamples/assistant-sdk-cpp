@@ -34,6 +34,7 @@ limitations under the License.
 #include "assistant_config.h"
 #include "audio_input.h"
 #include "audio_input_file.h"
+#include "base64_encode.h"
 #include "json_util.h"
 
 using google::assistant::embedded::v1alpha2::EmbeddedAssistant;
@@ -49,8 +50,8 @@ using grpc::ClientReaderWriter;
 
 static const std::string kCredentialsTypeUserAccount = "USER_ACCOUNT";
 static const std::string kLanguageCode = "en-US";
-static const std::string kDeviceInstanceId = "default";
 static const std::string kDeviceModelId = "default";
+static const std::string kDeviceInstanceId = "default";
 
 bool verbose = false;
 
