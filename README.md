@@ -76,11 +76,9 @@ cd ${PROJECT_PATH}
 make run_assistant
 ```
 
-6. Get credentials file. It can be either an end-user's credentials, or a service account's credentials.
+6. Get credentials file. It must be an end-user's credentials.
 
-For end-user's credentials:
-
-* Download the client secret json file from Google Cloud Platform Console following [these instructions](https://developers.google.com/assistant/sdk/develop/python/config-dev-project-and-account)
+* Go to the [Actions Console](https://console.actions.google.com/) and register your device model, following [these instructions](https://developers.google.com/assistant/sdk/guides/library/python/embed/register-device)
 * Move it in this folder and rename it to `client_secret.json`
 * run `get_credentials.sh` in this folder. It will create the file `credentials.json`.
 
