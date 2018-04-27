@@ -89,7 +89,7 @@ void PrintUsage() {
   std::cerr << "Usage: ./run_assistant "
             << "[--audio_input [<" << kALSAAudioInput << ">|<audio_file>] OR --text_input <string>] "
             << "--credentials_file <credentials_file> "
-            << "--credentials_type <" << kCredentialsTypeUserAccount << "> "
+            << "[--credentials_type <" << kCredentialsTypeUserAccount << ">] "
             << "[--api_endpoint <API endpoint>] "
             << "[--locale <locale>]"
             << std::endl;
@@ -162,6 +162,10 @@ int main(int argc, char** argv) {
                            &credentials_file_path, &credentials_type,
                            &api_endpoint, &locale)) {
     return -1;
+  }
+
+  if (credentials_type.empty()) {
+    credentials_type = kCredentialsTypeUserAccount; // Default is USER_ACCOUNT
   }
 
   // Create an AssistRequest
