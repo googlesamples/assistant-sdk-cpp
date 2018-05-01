@@ -1,4 +1,4 @@
-# gRPC C++ samples for Google Assistant SDK
+# Google Assistant SDK for devices - C++
 
 ## Requirements
 
