@@ -20,7 +20,6 @@ limitations under the License.
 
 #include <chrono>
 #include <fstream>
-#include <iostream>
 #include <iterator>
 #include <string>
 #include <thread>
