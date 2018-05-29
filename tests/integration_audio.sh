@@ -4,6 +4,6 @@
 set -e
 set -x
 
-./run_assistant --audio_input ./resources/weather_in_mountain_view.raw \
-  --credentials_file ./credentials.json --credentials_type USER_ACCOUNT \
+./run_assistant_audio --audio_input ./resources/weather_in_mountain_view.raw \
+  --credentials_file ./credentials.json \
   | grep "Mountain View"

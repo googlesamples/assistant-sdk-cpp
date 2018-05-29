@@ -86,8 +86,8 @@ std::shared_ptr<Channel> CreateChannel(const std::string& host) {
 }
 
 void PrintUsage() {
-  std::cerr << "Usage: ./run_assistant "
-            << "[--audio_input [<" << kALSAAudioInput << ">|<audio_file>] OR --text_input] "
+  std::cerr << "Usage: ./run_assistant_audio "
+            << "--audio_input [<" << kALSAAudioInput << ">|<audio_file>] "
             << "--credentials_file <credentials_file> "
             << "[--credentials_type <" << kCredentialsTypeUserAccount << ">] "
             << "[--api_endpoint <API endpoint>] "
@@ -101,7 +101,6 @@ bool GetCommandLineFlags(
     std::string* locale) {
   const struct option long_options[] = {
     {"audio_input",      required_argument, nullptr, 'a'},
-    {"text_input",       no_argument, nullptr, 't'},
     {"credentials_file", required_argument, nullptr, 'f'},
     {"credentials_type", required_argument, nullptr, 'c'},
     {"api_endpoint",     required_argument, nullptr, 'e'},
@@ -113,16 +112,13 @@ bool GetCommandLineFlags(
   while (true) {
     int option_index;
     int option_char =
-        getopt_long(argc, argv, "a:t:f:c:e:l:v", long_options, &option_index);
+        getopt_long(argc, argv, "a:f:c:e:l:v", long_options, &option_index);
     if (option_char == -1) {
       break;
     }
     switch (option_char) {
       case 'a':
         *audio_input = optarg;
-        break;
-      case 't':
-        use_text = true;
         break;
       case 'f':
         *credentials_file_path = optarg;
@@ -154,7 +150,7 @@ bool GetCommandLineFlags(
 }
 
 int main(int argc, char** argv) {
-  std::string audio_input_source, text_input_source, credentials_file_path, credentials_type,
+  std::string audio_input_source, credentials_file_path, credentials_type,
               api_endpoint, locale;
   // Initialize gRPC and DNS resolvers
   // https://github.com/grpc/grpc/issues/11366#issuecomment-328595941
@@ -169,19 +165,6 @@ int main(int argc, char** argv) {
   }
 
   while (true) {
-      if (use_text) {
-        // Take in any text
-        std::clog << ": " << std::endl;
-        std::getline(std::cin, text_input_source);
-        // Take in any text
-        if (text_input_source.empty()) {
-          // Input is empty. This can happen if the user entered
-          // no text or if the input source is through a terminal
-          // pipe. In either case, this will be interpreted as
-          // an exit condition.
-          return 0;
-        }
-      }
     // Create an AssistRequest
     AssistRequest request;
     auto* assist_config = request.mutable_config();
@@ -210,10 +193,8 @@ int main(int argc, char** argv) {
       assist_config->mutable_audio_in_config()->set_encoding(
         AudioInConfig::LINEAR16);
       assist_config->mutable_audio_in_config()->set_sample_rate_hertz(16000);
-    } else if (!text_input_source.empty()) {
-      assist_config->set_text_query(text_input_source);
     } else {
-      std::cerr << "requires either --audio_input or --text_input" << std::endl;
+      std::cerr << "requires --audio_input" << std::endl;
       return -1;
     }
 
@@ -344,7 +325,7 @@ int main(int argc, char** argv) {
       return -1;
     }
 
-    if (!use_text && audio_input_source != kALSAAudioInput) {
+    if (audio_input_source != kALSAAudioInput) {
       // A filepath was used as the audio input to this program
       // If this is the case, then we can stop the program after
       // one turn.
