@@ -62,10 +62,14 @@ all: run_assistant
 googleapis.ar: $(GOOGLEAPIS_CCS:.cc=.o)
 	ar r $@ $?
 
-run_assistant: run_assistant_audio run_assistant_text
+run_assistant: run_assistant_audio run_assistant_file run_assistant_text
 
 run_assistant_audio: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
 	$(ASSISTANT_AUDIO_O)
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+run_assistant_file: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
+	$(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/json_util.o ./src/run_assistant_file.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 run_assistant_text: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
@@ -82,7 +86,7 @@ $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS):
 protobufs: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS)
 
 clean:
-	rm -f run_assistant_audio run_assistant_text googleapis.ar \
+	rm -f run_assistant_text run_assistant_audio run_assistant_file googleapis.ar \
 		$(GOOGLEAPIS_CCS:.cc=.o) \
 		$(GOOGLEAPIS_ASSISTANT_CCS) $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) \
 		$(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) \

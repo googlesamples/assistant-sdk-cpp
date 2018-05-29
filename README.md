@@ -82,16 +82,16 @@ make run_assistant
 * Move it in this folder and rename it to `client_secret.json`
 * run `get_credentials.sh` in this folder. It will create the file `credentials.json`.
 
-7. Start one of the `run_assistant` samples
+7. Start one of the `run_assistant` samples:
 
 ```bash
-./run_assistant_audio --audio_input ./resources/weather_in_mountain_view.raw --credentials_file ./credentials.json
+./run_assistant_file --input ./resources/weather_in_mountain_view.raw --credentials_file ./credentials.json
 ```
 
 On a Linux workstation, you can alternatively use ALSA for audio input:
 
 ```bash
-./run_assistant_audio --audio_input ALSA_INPUT --credentials_file ./credentials.json
+./run_assistant_audio --credentials_file ./credentials.json
 ```
 
 You can use a text-based query instead of audio. This allows you to continually enter text queries to the Assistant.
