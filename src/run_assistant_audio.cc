@@ -87,7 +87,6 @@ std::shared_ptr<Channel> CreateChannel(const std::string& host) {
 
 void PrintUsage() {
   std::cerr << "Usage: ./run_assistant_audio "
-            << "--audio_input [<" << kALSAAudioInput << ">|<audio_file>] "
             << "--credentials_file <credentials_file> "
             << "[--credentials_type <" << kCredentialsTypeUserAccount << ">] "
             << "[--api_endpoint <API endpoint>] "
@@ -96,11 +95,10 @@ void PrintUsage() {
 }
 
 bool GetCommandLineFlags(
-    int argc, char** argv, std::string* audio_input, std::string* credentials_file_path,
+    int argc, char** argv, std::string* credentials_file_path,
     std::string* credentials_type, std::string* api_endpoint,
     std::string* locale) {
   const struct option long_options[] = {
-    {"audio_input",      required_argument, nullptr, 'a'},
     {"credentials_file", required_argument, nullptr, 'f'},
     {"credentials_type", required_argument, nullptr, 'c'},
     {"api_endpoint",     required_argument, nullptr, 'e'},
@@ -112,14 +110,11 @@ bool GetCommandLineFlags(
   while (true) {
     int option_index;
     int option_char =
-        getopt_long(argc, argv, "a:f:c:e:l:v", long_options, &option_index);
+        getopt_long(argc, argv, "f:c:e:l:v", long_options, &option_index);
     if (option_char == -1) {
       break;
     }
     switch (option_char) {
-      case 'a':
-        *audio_input = optarg;
-        break;
       case 'f':
         *credentials_file_path = optarg;
         break;
@@ -150,12 +145,18 @@ bool GetCommandLineFlags(
 }
 
 int main(int argc, char** argv) {
-  std::string audio_input_source, credentials_file_path, credentials_type,
+  std::string credentials_file_path, credentials_type,
               api_endpoint, locale;
+  #ifndef ENABLE_ALSA
+    std::cerr << "ALSA audio input is not supported on this platform."
+              << std::endl;
+    return -1;
+  #endif
+
   // Initialize gRPC and DNS resolvers
   // https://github.com/grpc/grpc/issues/11366#issuecomment-328595941
   grpc_init();
-  if (!GetCommandLineFlags(argc, argv, &audio_input_source, &credentials_file_path,
+  if (!GetCommandLineFlags(argc, argv, &credentials_file_path,
                           &credentials_type, &api_endpoint, &locale)) {
     return -1;
   }
@@ -188,15 +189,10 @@ int main(int argc, char** argv) {
     assist_config->mutable_audio_out_config()->set_sample_rate_hertz(16000);
 
     std::unique_ptr<AudioInput> audio_input;
-    if (!audio_input_source.empty()) {
-      // Set the AudioInConfig of the AssistRequest
-      assist_config->mutable_audio_in_config()->set_encoding(
-        AudioInConfig::LINEAR16);
-      assist_config->mutable_audio_in_config()->set_sample_rate_hertz(16000);
-    } else {
-      std::cerr << "requires --audio_input" << std::endl;
-      return -1;
-    }
+    // Set the AudioInConfig of the AssistRequest
+    assist_config->mutable_audio_in_config()->set_encoding(
+      AudioInConfig::LINEAR16);
+    assist_config->mutable_audio_in_config()->set_sample_rate_hertz(16000);
 
     // Read credentials file.
     std::ifstream credentials_file(credentials_file_path);
@@ -235,24 +231,7 @@ int main(int argc, char** argv) {
     }
     stream->Write(request);
 
-    if (!audio_input_source.empty()) {
-      if (audio_input_source == kALSAAudioInput) {
-  #ifdef ENABLE_ALSA
-          audio_input.reset(new AudioInputALSA());
-  #else
-          std::cerr << "ALSA audio input is not supported on this platform."
-                    << std::endl;
-          return -1;
-  #endif
-      } else {
-        std::ifstream audio_file(audio_input_source);
-        if (!audio_file) {
-          std::cerr << "Audio input file \"" << audio_input_source
-                    << "\" does not exist." << std::endl;
-          return -1;
-        }
-        audio_input.reset(new AudioInputFile(audio_input_source));
-      }
+      audio_input.reset(new AudioInputALSA());
 
       audio_input->AddDataListener(
         [stream, &request](std::shared_ptr<std::vector<unsigned char>> data) {
@@ -263,12 +242,9 @@ int main(int argc, char** argv) {
         stream->WritesDone();
       });
       audio_input->Start();
-    }
 
-  #ifdef ENABLE_ALSA
     AudioOutputALSA audio_output;
     audio_output.Start();
-  #endif
 
     // Read responses.
     if (verbose) {
@@ -285,14 +261,14 @@ int main(int argc, char** argv) {
       }
       if (response.has_audio_out()) {
         // CUSTOMIZE: play back audio_out here.
-  #ifdef ENABLE_ALSA
+
         std::shared_ptr<std::vector<unsigned char>>
             data(new std::vector<unsigned char>);
         data->resize(response.audio_out().audio_data().length());
         memcpy(&((*data)[0]), response.audio_out().audio_data().c_str(),
             response.audio_out().audio_data().length());
         audio_output.Send(data);
-  #endif
+
       }
       // CUSTOMIZE: render spoken request on screen
       for (int i = 0; i < response.speech_results_size(); i++) {
@@ -313,9 +289,9 @@ int main(int argc, char** argv) {
       }
     }
 
-  #ifdef ENABLE_ALSA
+
     audio_output.Stop();
-  #endif
+
 
     grpc::Status status = stream->Finish();
     if (!status.ok()) {
@@ -323,13 +299,6 @@ int main(int argc, char** argv) {
       std::cerr << "assistant_sdk failed, error: " <<
                 status.error_message() << std::endl;
       return -1;
-    }
-
-    if (audio_input_source != kALSAAudioInput) {
-      // A filepath was used as the audio input to this program
-      // If this is the case, then we can stop the program after
-      // one turn.
-      return 0;
     }
   }
 
