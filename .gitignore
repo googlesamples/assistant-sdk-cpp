@@ -7,6 +7,7 @@ client_secret.json
 credentials.json
 # Do not commit binaries
 googleapis.ar
-run_assistant
+run_assistant_audio
+run_assistant_text
 # Generated files
 src/embedded_assistant*

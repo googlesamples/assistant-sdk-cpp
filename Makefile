@@ -50,16 +50,26 @@ AUDIO_SRCS += src/audio_input_alsa.cc src/audio_output_alsa.cc
 LDFLAGS += `pkg-config --libs alsa`
 endif
 
+ASSISTANT_O = $(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/json_util.o \
+	./src/run_assistant_audio.o ./src/run_assistant_text.o
+ASSISTANT_AUDIO_O = $(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/json_util.o \
+	./src/run_assistant_audio.o
+ASSISTANT_TEXT_O = ./src/json_util.o ./src/run_assistant_text.o
+
 .PHONY: all
 all: run_assistant
 
 googleapis.ar: $(GOOGLEAPIS_CCS:.cc=.o)
 	ar r $@ $?
 
-run_assistant.o: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h)
+run_assistant: run_assistant_audio run_assistant_text
 
-run_assistant: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
-	$(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/json_util.o ./src/run_assistant.o
+run_assistant_audio: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
+	$(ASSISTANT_AUDIO_O)
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+run_assistant_text: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
+	$(ASSISTANT_TEXT_O)
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 json_util_test: ./src/json_util.o ./src/json_util_test.o
@@ -72,8 +82,8 @@ $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS):
 protobufs: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS)
 
 clean:
-	rm -f *.o run_assistant googleapis.ar \
+	rm -f run_assistant_audio run_assistant_text googleapis.ar \
 		$(GOOGLEAPIS_CCS:.cc=.o) \
 		$(GOOGLEAPIS_ASSISTANT_CCS) $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) \
 		$(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) \
-		./src/*.o
+		$(ASSISTANT_O)

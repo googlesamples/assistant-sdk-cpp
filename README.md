@@ -82,31 +82,34 @@ make run_assistant
 * Move it in this folder and rename it to `client_secret.json`
 * run `get_credentials.sh` in this folder. It will create the file `credentials.json`.
 
-7. Start `run_assistant`
-```
-./run_assistant --audio_input ./resources/weather_in_mountain_view.raw --credentials_file ./credentials.json
+7. Start one of the `run_assistant` samples
+
+```bash
+./run_assistant_audio --audio_input ./resources/weather_in_mountain_view.raw --credentials_file ./credentials.json
 ```
 
 On a Linux workstation, you can alternatively use ALSA for audio input:
-```
-./run_assistant --audio_input ALSA_INPUT --credentials_file ./credentials.json
+
+```bash
+./run_assistant_audio --audio_input ALSA_INPUT --credentials_file ./credentials.json
 ```
 
 You can use a text-based query instead of audio. This allows you to continually enter text queries to the Assistant.
-```
-./run_assistant --text_input --credentials_file ./credentials.json --credentials_type USER_ACCOUNT
+
+```bash
+./run_assistant_text --credentials_file ./credentials.json
 ```
 
 This takes input from `cin`, so you can send data to the program when it starts.
 
-```
-echo "what time is it" | ./run_assistant --text_input --credentials_file ./credentials.json --credentials_type USER_ACCOUNT
+```bash
+echo "what time is it" | ./run_assistant_text --credentials_file ./credentials.json
 ```
 
 To change the locale, include a `locale` parameter:
 
-```
-echo "Bonjour" | ./run_assistant --text_input --credentials_file ./credentials.json --credentials_type USER_ACCOUNT --locale "fr-FR"
+```bash
+echo "Bonjour" | ./run_assistant_text --credentials_file ./credentials.json --locale "fr-FR"
 ```
 
 Default Assistant gRPC API endpoint is embeddedassistant.googleapis.com. If you want to test with a custom Assistant gRPC API endpoint, you can pass an extra "--api_endpoint CUSTOM_API_ENDPOINT" to run_assistant.
