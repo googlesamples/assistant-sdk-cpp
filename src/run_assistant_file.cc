@@ -167,16 +167,27 @@ int main(int argc, char** argv) {
     AudioOutConfig::LINEAR16);
   assist_config->mutable_audio_out_config()->set_sample_rate_hertz(16000);
 
-  std::unique_ptr<AudioInput> audio_input;
-  if (!audio_input_source.empty()) {
-    // Set the AudioInConfig of the AssistRequest
-    assist_config->mutable_audio_in_config()->set_encoding(
-      AudioInConfig::LINEAR16);
-    assist_config->mutable_audio_in_config()->set_sample_rate_hertz(16000);
-  } else {
+  if (audio_input_source.empty()) {
     std::cerr << "requires --input" << std::endl;
-    return -1;
+    return -2;
   }
+  // Make sure the input file exists
+  std::ifstream audio_input_file(audio_input_source);
+  if (!audio_input_file) {
+      std::cerr << "Audio input file \"" << audio_input_source
+              << "\" does not exist." << std::endl;
+      return -2;
+  }
+  if (audio_output_source.empty()) {
+    std::clog << "requires --output" << std::endl;
+    return -3;
+  }
+
+  std::unique_ptr<AudioInput> audio_input;
+  // Set the AudioInConfig of the AssistRequest
+  assist_config->mutable_audio_in_config()->set_encoding(
+    AudioInConfig::LINEAR16);
+  assist_config->mutable_audio_in_config()->set_sample_rate_hertz(16000);
 
   // Read credentials file.
   std::ifstream credentials_file(credentials_file_path);
@@ -215,12 +226,6 @@ int main(int argc, char** argv) {
   }
   stream->Write(request);
 
-  std::ifstream audio_file(audio_input_source);
-  if (!audio_file) {
-    std::cerr << "Audio input file \"" << audio_input_source
-              << "\" does not exist." << std::endl;
-    return -1;
-  }
   audio_input.reset(new AudioInputFile(audio_input_source));
 
   audio_input->AddDataListener(
@@ -238,6 +243,20 @@ int main(int argc, char** argv) {
     std::clog << "assistant_sdk waiting for response ... " << std::endl;
   }
   AssistResponse response;
+
+  // Create an audio file to store the response
+  std::ofstream audio_output_file;
+  // Make sure to rewrite contents of file
+  audio_output_file.open(audio_output_source, std::ofstream::out | std::ofstream::trunc);
+  // Check whether file was opened correctly
+  if (audio_output_file.fail()) {
+    std::cerr << "error opening file " << audio_output_source << std::endl;
+    return -3;
+  }
+  if (verbose) {
+    std::clog << "assistant_sdk writing audio response to " << audio_output_source << std::endl;
+  }
+
   while (stream->Read(&response)) {  // Returns false when no more to read.
     if (response.has_audio_out() ||
         response.event_type() == AssistResponse_EventType_END_OF_UTTERANCE) {
@@ -245,6 +264,9 @@ int main(int argc, char** argv) {
       if (audio_input != nullptr && audio_input->IsRunning()) {
         audio_input->Stop();
       }
+    }
+    if (response.has_audio_out()) {
+      audio_output_file << response.audio_out().audio_data();
     }
     // CUSTOMIZE: render spoken request on screen
     for (int i = 0; i < response.speech_results_size(); i++) {
@@ -264,12 +286,14 @@ int main(int argc, char** argv) {
                 << std::endl;
     }
   }
+  audio_input_file.close();
+  audio_output_file.close();
 
   grpc::Status status = stream->Finish();
   if (!status.ok()) {
     // Report the RPC failure.
-    std::cerr << "assistant_sdk failed, error: "
-              << status.error_message() << std::endl;
+    std::cerr << "assistant_sdk failed, error: " <<
+              status.error_message() << std::endl;
     return -1;
   }
 
