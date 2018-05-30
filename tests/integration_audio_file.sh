@@ -5,5 +5,6 @@ set -e
 set -x
 
 ./run_assistant_file --input ./resources/weather_in_mountain_view.raw \
-  --credentials_file ./credentials.json \
+  --output /tmp/google-assistant-sdk-audio-output.raw \
+  --credentials ./credentials.json \
   | grep "Mountain View"

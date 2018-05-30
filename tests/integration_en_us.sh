@@ -5,4 +5,4 @@ set -e
 set -x
 
 echo "how do you say hi in spanish" | ./run_assistant_text \
-  --credentials_file ./credentials.json --verbose | grep "Hola"
+  --credentials ./credentials.json --verbose | grep "Hola"

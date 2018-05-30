@@ -5,5 +5,5 @@ set -e
 set -x
 
 echo "comment dit-on bonjour en español" | ./run_assistant_text \
-  --credentials_file ./credentials.json \
+  --credentials ./credentials.json \
   --locale "fr-FR" --verbose | grep "Buenos dias"
