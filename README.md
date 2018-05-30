@@ -85,31 +85,32 @@ make run_assistant
 7. Start one of the `run_assistant` samples:
 
 ```bash
-./run_assistant_file --input ./resources/weather_in_mountain_view.raw --credentials_file ./credentials.json
+./run_assistant_file --input ./resources/weather_in_mountain_view.raw --audio_output ./response.wav --credentials ./credentials.json
+aplay ./response.wav --rate=16000 --format=S16_LE
 ```
 
 On a Linux workstation, you can alternatively use ALSA for audio input:
 
 ```bash
-./run_assistant_audio --credentials_file ./credentials.json
+./run_assistant_audio --credentials ./credentials.json
 ```
 
 You can use a text-based query instead of audio. This allows you to continually enter text queries to the Assistant.
 
 ```bash
-./run_assistant_text --credentials_file ./credentials.json
+./run_assistant_text --credentials ./credentials.json
 ```
 
 This takes input from `cin`, so you can send data to the program when it starts.
 
 ```bash
-echo "what time is it" | ./run_assistant_text --credentials_file ./credentials.json
+echo "what time is it" | ./run_assistant_text --credentials ./credentials.json
 ```
 
 To change the locale, include a `locale` parameter:
 
 ```bash
-echo "Bonjour" | ./run_assistant_text --credentials_file ./credentials.json --locale "fr-FR"
+echo "Bonjour" | ./run_assistant_text --credentials ./credentials.json --locale "fr-FR"
 ```
 
 Default Assistant gRPC API endpoint is embeddedassistant.googleapis.com. If you want to test with a custom Assistant gRPC API endpoint, you can pass an extra "--api_endpoint CUSTOM_API_ENDPOINT" to run_assistant.

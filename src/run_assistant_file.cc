@@ -78,21 +78,21 @@ std::shared_ptr<Channel> CreateChannel(const std::string& host) {
 void PrintUsage() {
   std::cerr << "Usage: ./run_assistant_file "
             << "--input <audio_file> "
-            << "--credentials_file <credentials_file> "
-            << "[--credentials_type <" << kCredentialsTypeUserAccount << ">] "
+            << "--output <audio_file> "
+            << "--credentials <credentials_file> "
             << "[--api_endpoint <API endpoint>] "
             << "[--locale <locale>]"
             << std::endl;
 }
 
 bool GetCommandLineFlags(
-    int argc, char** argv, std::string* audio_input, std::string* credentials_file_path,
-    std::string* credentials_type, std::string* api_endpoint,
+    int argc, char** argv, std::string* audio_input, std::string* audio_output,
+    std::string* credentials_file_path, std::string* api_endpoint,
     std::string* locale) {
   const struct option long_options[] = {
     {"input",      required_argument, nullptr, 'i'},
-    {"credentials_file", required_argument, nullptr, 'f'},
-    {"credentials_type", required_argument, nullptr, 'c'},
+    {"output",      required_argument, nullptr, 'o'},
+    {"credentials", required_argument, nullptr, 'c'},
     {"api_endpoint",     required_argument, nullptr, 'e'},
     {"locale",           required_argument, nullptr, 'l'},
     {"verbose",          no_argument, nullptr, 'v'},
@@ -102,7 +102,7 @@ bool GetCommandLineFlags(
   while (true) {
     int option_index;
     int option_char =
-        getopt_long(argc, argv, "i:f:c:e:l:v", long_options, &option_index);
+        getopt_long(argc, argv, "i:o:c:e:l:v", long_options, &option_index);
     if (option_char == -1) {
       break;
     }
@@ -110,17 +110,11 @@ bool GetCommandLineFlags(
       case 'i':
         *audio_input = optarg;
         break;
-      case 'f':
-        *credentials_file_path = optarg;
+      case 'o':
+        *audio_output = optarg;
         break;
       case 'c':
-        *credentials_type = optarg;
-        if (*credentials_type != kCredentialsTypeUserAccount) {
-          std::cerr << "Invalid credentials_type: \"" << *credentials_type
-                    << "\". Should be \"" << kCredentialsTypeUserAccount
-                    << "\"" << std::endl;
-          return false;
-        }
+        *credentials_file_path = optarg;
         break;
       case 'e':
         *api_endpoint = optarg;
@@ -140,18 +134,14 @@ bool GetCommandLineFlags(
 }
 
 int main(int argc, char** argv) {
-  std::string audio_input_source, credentials_file_path, credentials_type,
+  std::string audio_input_source, audio_output_source, credentials_file_path,
               api_endpoint, locale;
   // Initialize gRPC and DNS resolvers
   // https://github.com/grpc/grpc/issues/11366#issuecomment-328595941
   grpc_init();
-  if (!GetCommandLineFlags(argc, argv, &audio_input_source, &credentials_file_path,
-                          &credentials_type, &api_endpoint, &locale)) {
+  if (!GetCommandLineFlags(argc, argv, &audio_input_source, &audio_output_source, &credentials_file_path,
+                          &api_endpoint, &locale)) {
     return -1;
-  }
-
-  if (credentials_type.empty()) {
-    credentials_type = kCredentialsTypeUserAccount; // Default is USER_ACCOUNT
   }
 
   // Create an AssistRequest
