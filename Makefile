@@ -11,11 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 GRPC_SRC_PATH ?= ./grpc
-GOOGLEAPIS_GENS_PATH ?= ./googleapis/gens
+GOOGLEAPIS_SRC_PATH ?= ./googleapis
+GOOGLEAPIS_GENS_PATH ?= $(GOOGLEAPIS_SRC_PATH)/gens
+GOOGLEAPIS_ASSISTANT_PATH = google/assistant/embedded/v1alpha2
+
+PROTOC ?= protoc
+PROTOC_PLUGINS_PATH ?= /usr/local/bin
+
 GOOGLEAPIS_API_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/api \
 	-name '*.pb.cc')
-GOOGLEAPIS_ASSISTANT_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/assistant/embedded/v1alpha2 \
+GOOGLEAPIS_ASSISTANT_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/$(GOOGLEAPIS_ASSISTANT_PATH) \
 	-name '*.pb.cc')
 GOOGLEAPIS_TYPE_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/type \
 	-name '*.pb.cc')
@@ -24,37 +31,55 @@ GOOGLEAPIS_RPC_CCS = $(shell find $(GOOGLEAPIS_GENS_PATH)/google/rpc \
 
 GOOGLEAPIS_CCS = $(GOOGLEAPIS_API_CCS) $(GOOGLEAPIS_RPC_CCS) $(GOOGLEAPIS_TYPE_CCS)
 
-GOOGLEAPIS_ASSISTANT_CCS = ./googleapis/gens/google/assistant/embedded/v1alpha2/embedded_assistant.pb.cc \
-	./googleapis/gens/google/assistant/embedded/v1alpha2/embedded_assistant.grpc.pb.cc
+GOOGLEAPIS_ASSISTANT_CCS = $(GOOGLEAPIS_GENS_PATH)/$(GOOGLEAPIS_ASSISTANT_PATH)/embedded_assistant.pb.cc \
+                           $(GOOGLEAPIS_GENS_PATH)/$(GOOGLEAPIS_ASSISTANT_PATH)/embedded_assistant.grpc.pb.cc
 
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
-CXX = g++
-CPPFLAGS += -I/usr/local/include -pthread -I$(GOOGLEAPIS_GENS_PATH) \
-	    -I$(GRPC_SRC_PATH) -I./src/
-CXXFLAGS += -std=c++11
+
+PKG_CONFIG ?= pkg-config
+HAS_PKG_CONFIG ?= $(shell command -v $(PKG_CONFIG) >/dev/null 2>&1 && echo true || echo false)
+ifeq ($(HAS_PKG_CONFIG),true)
+GRPC_GRPCPP_CFLAGS=`pkg-config --cflags grpc++ grpc`
+GRPC_GRPCPP_LDLAGS=`pkg-config --libs grpc++ grpc`
+ALSA_CFLAGS=`pkg-config --cflags alsa`
+ALSA_LDFLAGS=`pkg-config --libs alsa`
+else
+GRPC_GRPCPP_CFLAGS ?=
+GRPC_GRPCPP_LDLAGS ?=
+ALSA_CFLAGS ?=
+ALSA_LDFLAGS ?=
+endif
+
+CPPFLAGS += -I$(GOOGLEAPIS_GENS_PATH) \
+            -I$(GRPC_SRC_PATH) \
+            -I./src/
+
+CXXFLAGS += -std=c++11 $(GRPC_GRPCPP_CFLAGS)
+
 # grpc_cronet is for JSON functions in gRPC library.
 ifeq ($(SYSTEM),Darwin)
-LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++ grpc`       \
-           -lgrpc++_reflection -lgrpc_cronet                      \
+LDFLAGS += $(GRPC_GRPCPP_LDLAGS) \
+           -lgrpc++_reflection -lgrpc_cronet \
            -lprotobuf -lpthread -ldl -lcurl
 else
-LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++ grpc`       \
-           -lgrpc_cronet -Wl,--no-as-needed -lgrpc++_reflection   \
+LDFLAGS += $(GRPC_GRPCPP_LDLAGS) \
+           -lgrpc_cronet -Wl,--no-as-needed -lgrpc++_reflection \
            -Wl,--as-needed -lprotobuf -lpthread -ldl -lcurl
 endif
 
 AUDIO_SRCS =
 ifeq ($(SYSTEM),Linux)
 AUDIO_SRCS += src/audio_input_alsa.cc src/audio_output_alsa.cc
-LDFLAGS += `pkg-config --libs alsa`
+CXXFLAGS += $(ALSA_CFLAGS)
+LDFLAGS += $(ALSA_LDFLAGS)
 endif
 
 .PHONY: all
 all: run_assistant
 
 googleapis.ar: $(GOOGLEAPIS_CCS:.cc=.o)
-	ar r $@ $?
+	$(AR) r $@ $?
 
 run_assistant.o: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h)
 
@@ -66,11 +91,16 @@ json_util_test: ./src/json_util.o ./src/json_util_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS):
-	protoc -I=$(PROTO_PATH) --proto_path=.:$(GOOGLEAPIS_GENS_PATH)/..:/usr/local/include \
-	--cpp_out=./src --grpc_out=./src --plugin=protoc-gen-grpc=/usr/local/bin/grpc_cpp_plugin $(PROTO_PATH)/embedded_assistant.proto $^
+	$(PROTOC) -I=$(GOOGLEAPIS_SRC_PATH)/$(GOOGLEAPIS_ASSISTANT_PATH) --proto_path=.:$(GOOGLEAPIS_SRC_PATH) \
+	--cpp_out=$(GOOGLEAPIS_GENS_PATH)/$(GOOGLEAPIS_ASSISTANT_PATH) \
+	--grpc_out=$(GOOGLEAPIS_GENS_PATH)/$(GOOGLEAPIS_ASSISTANT_PATH) \
+	--plugin=protoc-gen-grpc=$(PROTOC_PLUGINS_PATH)/grpc_cpp_plugin \
+	$(GOOGLEAPIS_SRC_PATH)/$(GOOGLEAPIS_ASSISTANT_PATH)/embedded_assistant.proto $^
 
+.PHONY: protobufs
 protobufs: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS)
 
+.PHONY: clean
 clean:
 	rm -f *.o run_assistant googleapis.ar \
 		$(GOOGLEAPIS_CCS:.cc=.o) \
