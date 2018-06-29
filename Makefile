@@ -75,21 +75,22 @@ CXXFLAGS += $(ALSA_CFLAGS)
 LDFLAGS += $(ALSA_LDFLAGS)
 endif
 
-ASSISTANT_O = $(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/base64_encode.o ./src/json_util.o \
-	./src/run_assistant_audio.o ./src/run_assistant_text.o
-ASSISTANT_AUDIO_O = $(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/base64_encode.o ./src/json_util.o \
-	./src/run_assistant_audio.o
-ASSISTANT_FILE_O = $(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/base64_encode.o ./src/json_util.o \
-	./src/run_assistant_file.o
-ASSISTANT_TEXT_O = ./src/json_util.o ./src/base64_encode.o ./src/run_assistant_text.o
+CORE_SRCS = ./src/base64_encode.cc ./src/json_util.cc
+
+ASSISTANT_O       = $(CORE_SRCS:.cc=.o) $(AUDIO_SRCS:.cc=.o) \
+                    ./src/audio_input_file.o ./src/run_assistant_audio.o ./src/run_assistant_text.o
+ASSISTANT_AUDIO_O = $(CORE_SRCS:.cc=.o) $(AUDIO_SRCS:.cc=.o) \
+                    ./src/audio_input_file.o ./src/run_assistant_audio.o
+ASSISTANT_FILE_O  = $(CORE_SRCS:.cc=.o) $(AUDIO_SRCS:.cc=.o) \
+                    ./src/audio_input_file.o ./src/run_assistant_file.o
+ASSISTANT_TEXT_O  = $(CORE_SRCS:.cc=.o) \
+                    ./src/run_assistant_text.o
 
 .PHONY: all
-all: run_assistant
+all: run_assistant_audio run_assistant_file run_assistant_text
 
 googleapis.ar: $(GOOGLEAPIS_CCS:.cc=.o)
 	$(AR) r $@ $?
-
-run_assistant: run_assistant_audio run_assistant_file run_assistant_text
 
 run_assistant_audio: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
 	$(ASSISTANT_AUDIO_O)
