@@ -61,11 +61,11 @@ CXXFLAGS += -std=c++11 $(GRPC_GRPCPP_CFLAGS)
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += $(GRPC_GRPCPP_LDLAGS) \
            -lgrpc++_reflection -lgrpc_cronet \
-           -lprotobuf -lpthread -ldl -lcurl
+           -lprotobuf -lpthread -ldl
 else
 LDFLAGS += $(GRPC_GRPCPP_LDLAGS) \
            -lgrpc_cronet -Wl,--no-as-needed -lgrpc++_reflection \
-           -Wl,--as-needed -lprotobuf -lpthread -ldl -lcurl
+           -Wl,--as-needed -lprotobuf -lpthread -ldl
 endif
 
 AUDIO_SRCS =
@@ -75,13 +75,28 @@ CXXFLAGS += $(ALSA_CFLAGS)
 LDFLAGS += $(ALSA_LDFLAGS)
 endif
 
-ASSISTANT_O = $(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/base64_encode.o ./src/json_util.o \
-	./src/run_assistant_audio.o ./src/run_assistant_text.o
-ASSISTANT_AUDIO_O = $(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/base64_encode.o ./src/json_util.o \
-	./src/run_assistant_audio.o
-ASSISTANT_FILE_O = $(AUDIO_SRCS:.cc=.o) ./src/audio_input_file.o ./src/base64_encode.o ./src/json_util.o \
-	./src/run_assistant_file.o
-ASSISTANT_TEXT_O = ./src/json_util.o ./src/base64_encode.o ./src/run_assistant_text.o
+CORE_SRCS = ./src/base64_encode.cc ./src/json_util.cc
+AUDIO_INPUT_FILE_SRCS = ./src/audio_input_file.cc
+ASSISTANT_AUDIO_SRCS = ./src/run_assistant_audio.cc
+ASSISTANT_FILE_SRCS = ./src/run_assistant_file.cc
+ASSISTANT_TEXT_SRCS = ./src/run_assistant_text.cc
+
+ASSISTANT_O       = $(CORE_SRCS:.cc=.o) \
+                    $(AUDIO_SRCS:.cc=.o) \
+                    $(AUDIO_INPUT_FILE_SRCS:.cc=.o) \
+                    $(ASSISTANT_AUDIO_SRCS:.cc=.o) \
+                    $(ASSISTANT_FILE_SRCS:.cc=.o) \
+                    $(ASSISTANT_TEXT_SRCS:.cc=.o)
+ASSISTANT_AUDIO_O = $(CORE_SRCS:.cc=.o) \
+                    $(AUDIO_SRCS:.cc=.o) \
+                    $(AUDIO_INPUT_FILE_SRCS:.cc=.o) \
+                    $(ASSISTANT_AUDIO_SRCS:.cc=.o)
+ASSISTANT_FILE_O  = $(CORE_SRCS:.cc=.o) \
+                    $(AUDIO_SRCS:.cc=.o) \
+                    $(AUDIO_INPUT_FILE_SRCS:.cc=.o) \
+                    $(ASSISTANT_FILE_SRCS:.cc=.o)
+ASSISTANT_TEXT_O  = $(CORE_SRCS:.cc=.o) \
+                    $(ASSISTANT_TEXT_SRCS:.cc=.o)
 
 .PHONY: all
 all: run_assistant
@@ -89,6 +104,7 @@ all: run_assistant
 googleapis.ar: $(GOOGLEAPIS_CCS:.cc=.o)
 	$(AR) r $@ $?
 
+.PHONY: run_assistant
 run_assistant: run_assistant_audio run_assistant_file run_assistant_text
 
 run_assistant_audio: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
