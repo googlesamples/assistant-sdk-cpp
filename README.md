@@ -85,7 +85,7 @@ make run_assistant
 7. Start one of the `run_assistant` samples:
 
 ```bash
-./run_assistant_file --input ./resources/weather_in_mountain_view.raw --audio_output ./response.wav --credentials ./credentials.json
+./run_assistant_file --input ./resources/weather_in_mountain_view.raw --output ./response.wav --credentials ./credentials.json
 aplay ./response.wav --rate=16000 --format=S16_LE
 ```
 
