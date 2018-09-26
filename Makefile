@@ -67,7 +67,6 @@ ASSISTANT_AUDIO_O = $(CORE_SRCS:.cc=.o) \
                     $(AUDIO_INPUT_FILE_SRCS:.cc=.o) \
                     $(ASSISTANT_AUDIO_SRCS:.cc=.o)
 ASSISTANT_FILE_O  = $(CORE_SRCS:.cc=.o) \
-                    $(AUDIO_SRCS:.cc=.o) \
                     $(AUDIO_INPUT_FILE_SRCS:.cc=.o) \
                     $(ASSISTANT_FILE_SRCS:.cc=.o)
 ASSISTANT_TEXT_O  = $(CORE_SRCS:.cc=.o) \
