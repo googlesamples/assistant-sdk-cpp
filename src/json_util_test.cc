@@ -21,9 +21,9 @@ limitations under the License.
 bool check_result(const std::string& input_json,
                   std::unique_ptr<std::string> intended_result) {
   std::unique_ptr<std::string> result = GetCustomResponseOrNull(input_json);
-  return (intended_result == nullptr && result == nullptr)
-      || (intended_result != nullptr && result != nullptr
-          && *intended_result == *result);
+  return (intended_result == nullptr && result == nullptr) ||
+         (intended_result != nullptr && result != nullptr &&
+          *intended_result == *result);
 }
 
 int main() {
