@@ -35,13 +35,14 @@ limitations under the License.
 #include "base64_encode.h"
 #include "json_util.h"
 
-using google::assistant::embedded::v1alpha2::AssistRequest;
-using google::assistant::embedded::v1alpha2::AssistResponse;
-using google::assistant::embedded::v1alpha2::
-    AssistResponse_EventType_END_OF_UTTERANCE;
-using google::assistant::embedded::v1alpha2::AudioInConfig;
-using google::assistant::embedded::v1alpha2::AudioOutConfig;
-using google::assistant::embedded::v1alpha2::EmbeddedAssistant;
+namespace assistant = google::assistant::embedded::v1alpha2;
+
+using assistant::AssistRequest;
+using assistant::AssistResponse;
+using assistant::AssistResponse_EventType_END_OF_UTTERANCE;
+using assistant::AudioInConfig;
+using assistant::AudioOutConfig;
+using assistant::EmbeddedAssistant;
 
 using grpc::CallCredentials;
 using grpc::Channel;
@@ -269,8 +270,7 @@ int main(int argc, char** argv) {
     }
     // CUSTOMIZE: render spoken request on screen
     for (int i = 0; i < response.speech_results_size(); i++) {
-      google::assistant::embedded::v1alpha2::SpeechRecognitionResult result =
-          response.speech_results(i);
+      auto result = response.speech_results(i);
       if (verbose) {
         std::clog << "assistant_sdk request: \n"
                   << result.transcript() << " ("
