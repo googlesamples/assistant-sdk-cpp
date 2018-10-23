@@ -21,7 +21,7 @@ limitations under the License.
 
 class ScopeExit {
  public:
-  ScopeExit(std::function<void()> f): f_(f) {}
+  ScopeExit(std::function<void()> f) : f_(f) {}
   ~ScopeExit() { f_(); }
 
  private:
