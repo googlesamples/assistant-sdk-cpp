@@ -18,11 +18,11 @@ limitations under the License.
 #define AUDIO_INPUT_H
 
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>
-#include <iostream>
 
 // Base class for audio input. Input data should be mono, s16_le, 16000kz.
 // This class uses a separate thread to send audio data to listeners.
@@ -33,7 +33,7 @@ class AudioInput {
   // Listeners might be called in different thread.
   void AddDataListener(
       std::function<void(std::shared_ptr<std::vector<unsigned char>>)>
-      listener) {
+          listener) {
     data_listeners_.push_back(listener);
   }
   void AddStopListener(std::function<void()> listener) {

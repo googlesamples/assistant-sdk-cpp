@@ -18,7 +18,7 @@ limitations under the License.
 
 class AudioInputFile : public AudioInput {
  public:
-  AudioInputFile(const std::string& file_path): file_path_(file_path) {}
+  AudioInputFile(const std::string& file_path) : file_path_(file_path) {}
   ~AudioInputFile() override {}
 
   virtual std::unique_ptr<std::thread> GetBackgroundThread() override;

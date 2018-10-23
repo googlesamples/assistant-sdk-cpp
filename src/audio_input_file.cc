@@ -24,7 +24,8 @@ std::unique_ptr<std::thread> AudioInputFile::GetBackgroundThread() {
     // Initialize.
     std::ifstream file_stream(file_path_);
     if (!file_stream) {
-      std::cerr << "AudioInputFile cannot open file " << file_path_ << std::endl;
+      std::cerr << "AudioInputFile cannot open file " << file_path_
+                << std::endl;
       return;
     }
 
