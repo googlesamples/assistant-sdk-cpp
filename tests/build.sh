@@ -9,7 +9,7 @@ echo "Cleaning dependencies"
 
 # Step 2. Install dependencies
 echo "Installing dependencies"
-sudo apt-get install -y autoconf automake libtool build-essential curl unzip
+sudo apt-get install -y autoconf automake libtool build-essential curl unzip pkg-config
 sudo apt-get install -y libasound2-dev  # For ALSA sound output
 sudo apt-get install -y libcurl4-openssl-dev # CURL development library
 
