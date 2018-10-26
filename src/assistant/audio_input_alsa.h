@@ -14,13 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "audio_input.h"
+#ifndef SRC_ASSISTANT_AUDIO_INPUT_ALSA_H_
+#define SRC_ASSISTANT_AUDIO_INPUT_ALSA_H_
+
+#include "assistant/audio_input.h"
+
+#include <memory>
 
 class AudioInputALSA : public AudioInput {
  public:
   ~AudioInputALSA() override {}
 
-  virtual std::unique_ptr<std::thread> GetBackgroundThread() override;
+  std::unique_ptr<std::thread> GetBackgroundThread() override;
 
  private:
   // For 16000Hz, it's about 0.1 second.
@@ -28,3 +33,5 @@ class AudioInputALSA : public AudioInput {
   // 1 channel, S16LE, so 2 bytes each frame.
   static constexpr int kBytesPerFrame = 2;
 };
+
+#endif  // SRC_ASSISTANT_AUDIO_INPUT_ALSA_H_

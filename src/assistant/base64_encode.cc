@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "base64_encode.h"
+#include "assistant/base64_encode.h"
 
 // https://stackoverflow.com/questions/180947/base64-decode-snippet-in-c by
 // Manuel Martinez

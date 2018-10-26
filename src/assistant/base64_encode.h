@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef BASE64_ENCODE_H
-#define BASE64_ENCODE_H
+#ifndef SRC_ASSISTANT_BASE64_ENCODE_H_
+#define SRC_ASSISTANT_BASE64_ENCODE_H_
 
 #include <string>
 
 std::string base64_encode(const std::string&);
 
-#endif
+#endif  // SRC_ASSISTANT_BASE64_ENCODE_H_

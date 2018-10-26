@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef JSON_UTIL_H
-#define JSON_UTIL_H
+#ifndef SRC_ASSISTANT_JSON_UTIL_H_
+#define SRC_ASSISTANT_JSON_UTIL_H_
 
 #include <memory>
 #include <string>
 
-#endif
+#endif  // SRC_ASSISTANT_JSON_UTIL_H_

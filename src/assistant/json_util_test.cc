@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "json_util.h"
+#include "assistant/json_util.h"
 
 #include <iostream>
+#include <utility>
 
 bool check_result(const std::string& input_json,
                   std::unique_ptr<std::string> intended_result) {

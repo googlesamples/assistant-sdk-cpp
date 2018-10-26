@@ -14,11 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "audio_output_alsa.h"
+#include "assistant/audio_output_alsa.h"
 
 #include <alsa/asoundlib.h>
 
 #include <iostream>
+#include <memory>
 
 bool AudioOutputALSA::Start() {
   std::unique_lock<std::mutex> lock(isRunningMutex);

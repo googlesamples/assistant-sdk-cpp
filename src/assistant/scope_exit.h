@@ -14,18 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef SCOPE_EXIT_H
-#define SCOPE_EXIT_H
+#ifndef SRC_ASSISTANT_SCOPE_EXIT_H_
+#define SRC_ASSISTANT_SCOPE_EXIT_H_
 
 #include <functional>
 
 class ScopeExit {
  public:
-  ScopeExit(std::function<void()> f) : f_(f) {}
+  explicit ScopeExit(std::function<void()> f) : f_(f) {}
   ~ScopeExit() { f_(); }
 
  private:
   std::function<void()> f_;
 };
 
-#endif
+#endif  // SRC_ASSISTANT_SCOPE_EXIT_H_

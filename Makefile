@@ -53,7 +53,7 @@ endif
 
 CPPFLAGS += -I$(GOOGLEAPIS_GENS_PATH) \
             -I$(GRPC_SRC_PATH) \
-            -I./src/assistant
+            -I./src
 
 CXXFLAGS += -std=c++11 $(GRPC_GRPCPP_CFLAGS)
 

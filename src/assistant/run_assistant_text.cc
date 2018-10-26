@@ -18,22 +18,22 @@ limitations under the License.
 
 #include <getopt.h>
 
-#include <chrono>
+#include <chrono>  // NOLINT
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <sstream>
 #include <string>
-#include <thread>
+#include <thread>  // NOLINT
 
 #include "google/assistant/embedded/v1alpha2/embedded_assistant.grpc.pb.h"
 #include "google/assistant/embedded/v1alpha2/embedded_assistant.pb.h"
 
-#include "assistant_config.h"
-#include "audio_input.h"
-#include "audio_input_file.h"
-#include "base64_encode.h"
-#include "json_util.h"
+#include "assistant/assistant_config.h"
+#include "assistant/audio_input.h"
+#include "assistant/audio_input_file.h"
+#include "assistant/base64_encode.h"
+#include "assistant/json_util.h"
 
 namespace assistant = google::assistant::embedded::v1alpha2;
 
@@ -49,10 +49,10 @@ using grpc::CallCredentials;
 using grpc::Channel;
 using grpc::ClientReaderWriter;
 
-static const std::string kCredentialsTypeUserAccount = "USER_ACCOUNT";
-static const std::string kLanguageCode = "en-US";
-static const std::string kDeviceModelId = "default";
-static const std::string kDeviceInstanceId = "default";
+static const char kCredentialsTypeUserAccount[] = "USER_ACCOUNT";
+static const char kLanguageCode[] = "en-US";
+static const char kDeviceModelId[] = "default";
+static const char kDeviceInstanceId[] = "default";
 
 bool verbose = false;
 

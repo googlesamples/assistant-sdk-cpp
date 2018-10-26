@@ -14,15 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "audio_input.h"
+#ifndef SRC_ASSISTANT_AUDIO_INPUT_FILE_H_
+#define SRC_ASSISTANT_AUDIO_INPUT_FILE_H_
+
+#include "assistant/audio_input.h"
+
+#include <memory>
+#include <string>
 
 class AudioInputFile : public AudioInput {
  public:
-  AudioInputFile(const std::string& file_path) : file_path_(file_path) {}
+  explicit AudioInputFile(const std::string& file_path)
+      : file_path_(file_path) {}
   ~AudioInputFile() override {}
 
-  virtual std::unique_ptr<std::thread> GetBackgroundThread() override;
+  std::unique_ptr<std::thread> GetBackgroundThread() override;
 
  private:
   const std::string file_path_;
 };
+
+#endif  // SRC_ASSISTANT_AUDIO_INPUT_FILE_H_
