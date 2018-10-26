@@ -16,12 +16,14 @@ limitations under the License.
 
 #include "assistant/base64_encode.h"
 
-// https://stackoverflow.com/questions/180947/base64-decode-snippet-in-c by
-// Manuel Martinez
+// https://stackoverflow.com/a/34571089/496459
+// by Manuel Martinez
 std::string base64_encode(const std::string &in) {
   std::string out;
 
-  int val = 0, valb = -6;
+  unsigned val = 0;
+  int valb = -6;
+
   for (u_char c : in) {
     val = (val << 8) + c;
     valb += 8;
@@ -32,13 +34,16 @@ std::string base64_encode(const std::string &in) {
       valb -= 6;
     }
   }
+
   if (valb > -6) {
     out.push_back(
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
             [((val << 8) >> (valb + 8)) & 0x3F]);
   }
+
   while (out.size() % 4) {
     out.push_back('=');
   }
+
   return out;
 }
