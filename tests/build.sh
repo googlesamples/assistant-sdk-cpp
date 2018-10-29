@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
+set -u
+set -o pipefail
 set -x
 PROJECT_PATH=$(pwd)
 
@@ -9,14 +11,14 @@ echo "Cleaning dependencies"
 
 # Step 2. Install dependencies
 echo "Installing dependencies"
-sudo apt-get install -y autoconf automake libtool build-essential curl unzip pkg-config
-sudo apt-get install -y libasound2-dev  # For ALSA sound output
-sudo apt-get install -y libcurl4-openssl-dev # CURL development library
+sudo apt-get -y -qq install autoconf automake libtool build-essential curl unzip pkg-config
+sudo apt-get -y -qq install libasound2-dev  # For ALSA sound output
+sudo apt-get -y -qq install libcurl4-openssl-dev # CURL development library
 
 # Step 3. Build protocol buffer, gRPC, and Google APIs
-git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
+git clone -b "$(curl -L https://grpc.io/release)" https://github.com/grpc/grpc
 GRPC_PATH=${PROJECT_PATH}/grpc
-cd ${GRPC_PATH}
+cd "${GRPC_PATH}"
 # Checkout stable release of gRPC
 git checkout v1.11.0
 git submodule update --init
@@ -28,26 +30,22 @@ sudo make install
 sudo ldconfig
 
 echo "Compiling gRPC"
-export LDFLAGS="$LDFLAGS -lm"
-cd ${GRPC_PATH}
+cd "${GRPC_PATH}"
 make clean
-make
+LDFLAGS="-lm" make
 sudo make install
 sudo ldconfig
 
 echo "Compiling Google APIs"
-cd ${PROJECT_PATH}
+cd "${PROJECT_PATH}"
 git clone https://github.com/googleapis/googleapis.git
 cd googleapis/
 make LANGUAGE=cpp
 
-# Step 4. Export environmental variable
-export GOOGLEAPIS_GENS_PATH=${PROJECT_PATH}/googleapis/gens
-
-# Step 5. Build assistant-grpc
+# Step 4. Build assistant-grpc
 echo "Compiling C++ Assistant"
-cd ${PROJECT_PATH}
-make run_assistant
+cd "${PROJECT_PATH}"
+GOOGLEAPIS_GENS_PATH=${PROJECT_PATH}/googleapis/gens make run_assistant
 
 # If we get to this point, the project has successfully been built, and we can exit.
 echo "Project built!"
