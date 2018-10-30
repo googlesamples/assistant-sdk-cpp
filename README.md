@@ -34,7 +34,7 @@ export PROJECT_PATH=$(pwd)
 
 2. Install dependencies
 ```
-sudo apt-get install autoconf automake libtool build-essential curl unzip
+sudo apt-get install autoconf automake libtool build-essential curl unzip pkg-config
 sudo apt-get install libasound2-dev  # For ALSA sound output
 sudo apt-get install libcurl4-openssl-dev # CURL development library
 ```

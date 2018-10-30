@@ -53,7 +53,7 @@ endif
 
 CPPFLAGS += -I$(GOOGLEAPIS_GENS_PATH) \
             -I$(GRPC_SRC_PATH) \
-            -I./src/
+            -I./src
 
 CXXFLAGS += -std=c++11 $(GRPC_GRPCPP_CFLAGS)
 
@@ -70,16 +70,16 @@ endif
 
 AUDIO_SRCS =
 ifeq ($(SYSTEM),Linux)
-AUDIO_SRCS += src/audio_input_alsa.cc src/audio_output_alsa.cc
+AUDIO_SRCS += ./src/assistant/audio_input_alsa.cc ./src/assistant/audio_output_alsa.cc
 CXXFLAGS += $(ALSA_CFLAGS)
 LDFLAGS += $(ALSA_LDFLAGS)
 endif
 
-CORE_SRCS = ./src/base64_encode.cc ./src/json_util.cc
-AUDIO_INPUT_FILE_SRCS = ./src/audio_input_file.cc
-ASSISTANT_AUDIO_SRCS = ./src/run_assistant_audio.cc
-ASSISTANT_FILE_SRCS = ./src/run_assistant_file.cc
-ASSISTANT_TEXT_SRCS = ./src/run_assistant_text.cc
+CORE_SRCS = ./src/assistant/base64_encode.cc ./src/assistant/json_util.cc
+AUDIO_INPUT_FILE_SRCS = ./src/assistant/audio_input_file.cc
+ASSISTANT_AUDIO_SRCS = ./src/assistant/run_assistant_audio.cc
+ASSISTANT_FILE_SRCS = ./src/assistant/run_assistant_file.cc
+ASSISTANT_TEXT_SRCS = ./src/assistant/run_assistant_text.cc
 
 ASSISTANT_O       = $(CORE_SRCS:.cc=.o) \
                     $(AUDIO_SRCS:.cc=.o) \
@@ -118,7 +118,7 @@ run_assistant_text: $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.o) googleapis.ar \
 	$(ASSISTANT_TEXT_O)
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-json_util_test: ./src/json_util.o ./src/json_util_test.o
+json_util_test: ./src/assistant/json_util.o ./src/assistant/json_util_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 $(GOOGLEAPIS_ASSISTANT_CCS:.cc=.h) $(GOOGLEAPIS_ASSISTANT_CCS):

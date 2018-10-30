@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Google Inc.
+Copyright 2017 Google Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,11 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef BASE64_ENCODE_H
-#define BASE64_ENCODE_H
+#ifndef SRC_ASSISTANT_AUDIO_INPUT_FILE_H_
+#define SRC_ASSISTANT_AUDIO_INPUT_FILE_H_
 
+#include "assistant/audio_input.h"
+
+#include <memory>
 #include <string>
 
-std::string base64_encode(const std::string&);
+class AudioInputFile : public AudioInput {
+ public:
+  explicit AudioInputFile(const std::string& file_path)
+      : file_path_(file_path) {}
+  ~AudioInputFile() override {}
 
-#endif
+  std::unique_ptr<std::thread> GetBackgroundThread() override;
+
+ private:
+  const std::string file_path_;
+};
+
+#endif  // SRC_ASSISTANT_AUDIO_INPUT_FILE_H_

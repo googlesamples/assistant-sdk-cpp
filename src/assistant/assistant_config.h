@@ -14,15 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "audio_input.h"
+#ifndef SRC_ASSISTANT_ASSISTANT_CONFIG_H_
+#define SRC_ASSISTANT_ASSISTANT_CONFIG_H_
 
-class AudioInputFile : public AudioInput {
- public:
-  AudioInputFile(const std::string& file_path) : file_path_(file_path) {}
-  ~AudioInputFile() override {}
+// This is the endpoint to send gRPC data.
+#define ASSISTANT_ENDPOINT "embeddedassistant.googleapis.com"
 
-  virtual std::unique_ptr<std::thread> GetBackgroundThread() override;
-
- private:
-  const std::string file_path_;
-};
+#endif  // SRC_ASSISTANT_ASSISTANT_CONFIG_H_
