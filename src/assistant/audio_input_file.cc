@@ -14,10 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "audio_input_file.h"
+#include "assistant/audio_input_file.h"
 
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <vector>
 
 std::unique_ptr<std::thread> AudioInputFile::GetBackgroundThread() {
   return std::unique_ptr<std::thread>(new std::thread([this]() {
@@ -35,8 +37,8 @@ std::unique_ptr<std::thread> AudioInputFile::GetBackgroundThread() {
     chunk->resize(chunk_size);
     while (is_running_) {
       // Read another chunk from the file.
-      std::streamsize bytes_read =
-          file_stream.rdbuf()->sgetn((char*)&(*chunk.get())[0], chunk->size());
+      std::streamsize bytes_read = file_stream.rdbuf()->sgetn(
+          reinterpret_cast<char*>(&(*chunk.get())[0]), chunk->size());
       if (bytes_read > 0) {
         chunk->resize(bytes_read);
         for (auto& listener : data_listeners_) {

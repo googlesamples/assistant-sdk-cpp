@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef ASSISTANT_CONFIG_H
-#define ASSISTANT_CONFIG_H
+#ifndef SRC_ASSISTANT_JSON_UTIL_H_
+#define SRC_ASSISTANT_JSON_UTIL_H_
 
-// This is the endpoint to send gRPC data.
-#define ASSISTANT_ENDPOINT "embeddedassistant.googleapis.com"
+#include <memory>
+#include <string>
 
-#endif
+#endif  // SRC_ASSISTANT_JSON_UTIL_H_

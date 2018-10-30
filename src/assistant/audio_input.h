@@ -14,14 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef AUDIO_INPUT_H
-#define AUDIO_INPUT_H
+#ifndef SRC_ASSISTANT_AUDIO_INPUT_H_
+#define SRC_ASSISTANT_AUDIO_INPUT_H_
 
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <mutex>
-#include <thread>
+#include <mutex>   // NOLINT
+#include <thread>  // NOLINT
+#include <utility>
 #include <vector>
 
 // Base class for audio input. Input data should be mono, s16_le, 16000kz.
@@ -99,4 +100,4 @@ class AudioInput {
   std::unique_ptr<std::thread> send_thread_;
 };
 
-#endif
+#endif  // SRC_ASSISTANT_AUDIO_INPUT_H_

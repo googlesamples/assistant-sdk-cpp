@@ -14,18 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef SCOPE_EXIT_H
-#define SCOPE_EXIT_H
+#ifndef SRC_ASSISTANT_AUDIO_INPUT_ALSA_H_
+#define SRC_ASSISTANT_AUDIO_INPUT_ALSA_H_
 
-#include <functional>
+#include "assistant/audio_input.h"
 
-class ScopeExit {
+#include <memory>
+
+class AudioInputALSA : public AudioInput {
  public:
-  ScopeExit(std::function<void()> f) : f_(f) {}
-  ~ScopeExit() { f_(); }
+  ~AudioInputALSA() override {}
+
+  std::unique_ptr<std::thread> GetBackgroundThread() override;
 
  private:
-  std::function<void()> f_;
+  // For 16000Hz, it's about 0.1 second.
+  static constexpr int kFramesPerPacket = 1600;
+  // 1 channel, S16LE, so 2 bytes each frame.
+  static constexpr int kBytesPerFrame = 2;
 };
 
-#endif
+#endif  // SRC_ASSISTANT_AUDIO_INPUT_ALSA_H_

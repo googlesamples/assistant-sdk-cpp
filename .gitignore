@@ -1,6 +1,6 @@
 grpc/
 googleapis/
-src/*.o
+src/assistant/*.o
 # Do not commit private credentials
 client_secret_*.json
 client_secret.json

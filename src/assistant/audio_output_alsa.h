@@ -14,9 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <condition_variable>
-#include <mutex>
-#include <thread>
+#ifndef SRC_ASSISTANT_AUDIO_OUTPUT_ALSA_H_
+#define SRC_ASSISTANT_AUDIO_OUTPUT_ALSA_H_
+
+#include <condition_variable>  // NOLINT
+#include <memory>
+#include <mutex>   // NOLINT
+#include <thread>  // NOLINT
 #include <vector>
 
 // Audio output using ALSA.
@@ -38,3 +42,5 @@ class AudioOutputALSA {
   bool isRunning = false;
   std::mutex isRunningMutex;
 };
+
+#endif  // SRC_ASSISTANT_AUDIO_OUTPUT_ALSA_H_

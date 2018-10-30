@@ -14,8 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "json_util.h"
-#include "scope_exit.h"
+#include "assistant/json_util.h"
 
 extern "C" {
 #include <src/core/lib/json/json.h>
@@ -23,6 +22,8 @@ extern "C" {
 
 #include <cstring>
 #include <iostream>
+
+#include "assistant/scope_exit.h"
 
 grpc_json* GetJsonValueOrNullFromDict(grpc_json* dict_node, const char* key) {
   if (dict_node->type != GRPC_JSON_OBJECT) {

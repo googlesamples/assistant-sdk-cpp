@@ -14,11 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "audio_input_alsa.h"
+#include "assistant/audio_input_alsa.h"
 
 #include <alsa/asoundlib.h>
 
 #include <iostream>
+#include <memory>
+#include <vector>
 
 std::unique_ptr<std::thread> AudioInputALSA::GetBackgroundThread() {
   return std::unique_ptr<std::thread>(new std::thread([this]() {

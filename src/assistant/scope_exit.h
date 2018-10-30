@@ -14,10 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef JSON_UTIL_H
-#define JSON_UTIL_H
+#ifndef SRC_ASSISTANT_SCOPE_EXIT_H_
+#define SRC_ASSISTANT_SCOPE_EXIT_H_
 
-#include <memory>
-#include <string>
+#include <functional>
 
-#endif
+class ScopeExit {
+ public:
+  explicit ScopeExit(std::function<void()> f) : f_(f) {}
+  ~ScopeExit() { f_(); }
+
+ private:
+  std::function<void()> f_;
+};
+
+#endif  // SRC_ASSISTANT_SCOPE_EXIT_H_
