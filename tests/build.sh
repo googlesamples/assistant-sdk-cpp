@@ -20,7 +20,7 @@ git clone -b "$(curl -L https://grpc.io/release)" https://github.com/grpc/grpc
 GRPC_PATH=${PROJECT_PATH}/grpc
 cd "${GRPC_PATH}"
 # Checkout stable release of gRPC
-git checkout v1.11.0
+git checkout v1.16.0
 git submodule update --init
 
 echo "Compiling gRPC protobufs"
