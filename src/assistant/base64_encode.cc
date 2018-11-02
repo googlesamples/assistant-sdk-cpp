@@ -24,7 +24,7 @@ std::string base64_encode(const std::string &in) {
   unsigned val = 0;
   int valb = -6;
 
-  for (u_char c : in) {
+  for (unsigned char c : in) {
     val = (val << 8) + c;
     valb += 8;
     while (valb >= 0) {
