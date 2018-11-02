@@ -31,14 +31,14 @@ std::unique_ptr<std::thread> AudioInputFile::GetBackgroundThread() {
       return;
     }
 
-    const size_t chunk_size = 20 * 1024;  // 20KB
-    std::shared_ptr<std::vector<unsigned char>> chunk(
-        new std::vector<unsigned char>);
+    // 16kB
+    const size_t chunk_size = 16 * 1024;
+    auto chunk = std::make_shared<std::vector<unsigned char>>();
     chunk->resize(chunk_size);
     while (is_running_) {
       // Read another chunk from the file.
       std::streamsize bytes_read = file_stream.rdbuf()->sgetn(
-          reinterpret_cast<char*>(&(*chunk.get())[0]), chunk->size());
+          reinterpret_cast<char*>(chunk->data()), chunk->size());
       if (bytes_read > 0) {
         chunk->resize(bytes_read);
         for (auto& listener : data_listeners_) {
@@ -48,8 +48,8 @@ std::unique_ptr<std::thread> AudioInputFile::GetBackgroundThread() {
       if (bytes_read < chunk->size()) {
         break;
       }
-      // Wait a second before writing the next chunk.
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+      // 16kB = 500ms
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
     // Call |OnStop|.
