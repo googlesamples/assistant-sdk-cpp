@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
     std::string credentials = credentials_buffer.str();
     std::shared_ptr<CallCredentials> call_credentials;
     call_credentials = grpc::GoogleRefreshTokenCredentials(credentials);
-    if (call_credentials.get() == nullptr) {
+    if (call_credentials == nullptr) {
       std::cerr << "Credentials file \"" << credentials_file_path
                 << "\" is invalid. Check step 5 in README for how to get valid "
                 << "credentials." << std::endl;
@@ -197,8 +197,8 @@ int main(int argc, char** argv) {
     context.set_fail_fast(false);
     context.set_credentials(call_credentials);
 
-    std::shared_ptr<ClientReaderWriter<AssistRequest, AssistResponse>> stream(
-        std::move(assistant->Assist(&context)));
+    using AssistantClient = ClientReaderWriter<AssistRequest, AssistResponse>;
+    std::shared_ptr<AssistantClient> stream = assistant->Assist(&context);
     // Write config in first stream.
     if (verbose) {
       std::clog << "assistant_sdk wrote first request: "

@@ -183,7 +183,6 @@ int main(int argc, char** argv) {
         html_out_command.empty() ? ScreenOutConfig::SCREEN_MODE_UNSPECIFIED
                                  : ScreenOutConfig::PLAYING);
 
-    std::unique_ptr<AudioInput> audio_input;
     // Set the AudioInConfig of the AssistRequest
     assist_config->mutable_audio_in_config()->set_encoding(
         AudioInConfig::LINEAR16);
@@ -201,7 +200,7 @@ int main(int argc, char** argv) {
     std::string credentials = credentials_buffer.str();
     std::shared_ptr<CallCredentials> call_credentials;
     call_credentials = grpc::GoogleRefreshTokenCredentials(credentials);
-    if (call_credentials.get() == nullptr) {
+    if (call_credentials == nullptr) {
       std::cerr << "Credentials file \"" << credentials_file_path
                 << "\" is invalid. Check step 5 in README for how to get valid "
                 << "credentials." << std::endl;
@@ -217,8 +216,8 @@ int main(int argc, char** argv) {
     context.set_fail_fast(false);
     context.set_credentials(call_credentials);
 
-    std::shared_ptr<ClientReaderWriter<AssistRequest, AssistResponse>> stream(
-        std::move(assistant->Assist(&context)));
+    using AssistantClient = ClientReaderWriter<AssistRequest, AssistResponse>;
+    std::shared_ptr<AssistantClient> stream = assistant->Assist(&context);
     // Write config in first stream.
     if (verbose) {
       std::clog << "assistant_sdk wrote first request: "
@@ -226,8 +225,7 @@ int main(int argc, char** argv) {
     }
     stream->Write(request);
 
-    audio_input.reset(new AudioInputALSA());
-
+    std::unique_ptr<AudioInput> audio_input(new AudioInputALSA());
     audio_input->AddDataListener(
         [stream, &request](std::shared_ptr<std::vector<unsigned char>> data) {
           request.set_audio_in(&((*data)[0]), data->size());
@@ -255,8 +253,7 @@ int main(int argc, char** argv) {
       if (response.has_audio_out()) {
         // CUSTOMIZE: play back audio_out here.
 
-        std::shared_ptr<std::vector<unsigned char>> data(
-            new std::vector<unsigned char>);
+        auto data = std::make_shared<std::vector<unsigned char>>();
         data->resize(response.audio_out().audio_data().length());
         memcpy(&((*data)[0]), response.audio_out().audio_data().c_str(),
                response.audio_out().audio_data().length());

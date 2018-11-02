@@ -36,7 +36,7 @@ int main() {
   }
 
   std::string incomplete_json = "{}";
-  intended_result.reset(nullptr);
+  intended_result = nullptr;
   if (!check_result(incomplete_json, std::move(intended_result))) {
     std::cerr << "Test failed for incomplete JSON" << std::endl;
     return 1;

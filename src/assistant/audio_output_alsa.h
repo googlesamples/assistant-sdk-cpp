@@ -38,9 +38,9 @@ class AudioOutputALSA {
   std::vector<std::shared_ptr<std::vector<unsigned char>>> audioData;
   std::mutex audioDataMutex;
   std::condition_variable audioDataCv;
-  std::unique_ptr<std::thread> alsaThread;
   bool isRunning = false;
   std::mutex isRunningMutex;
+  std::thread alsaThread;
 };
 
 #endif  // SRC_ASSISTANT_AUDIO_OUTPUT_ALSA_H_
