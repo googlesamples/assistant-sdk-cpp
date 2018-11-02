@@ -1,8 +1,12 @@
+#!/bin/bash
+set -e
+set -u
+set -o pipefail
+set -x
+
 # Run all tests
 # Expected usage:
 #   > cpp$ ./tests/test_all.sh
-set -e
-set -x
 
 # Verify it builds
 ./tests/build.sh

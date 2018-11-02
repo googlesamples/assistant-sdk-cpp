@@ -1,7 +1,13 @@
+#!/bin/bash
+set -e
+set -u
+set -o pipefail
+set -x
+
 # Greedily cleans the project and system-wide dependencies
 # This will put the development machine in a clean state
 # to install development tools.
-rm -f *.o run_assistant googleapis.ar ./src/*.o
+git clean -xfd -e *.json
 rm -rf ./grpc/ ./googleapis/
 # https://github.com/grpc/grpc/pull/10706#issuecomment-302775038
 sudo apt-get purge -y libc-ares-dev
