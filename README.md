@@ -52,37 +52,31 @@ cd third_party/protobuf
 sudo make install
 sudo ldconfig
 
-export LDFLAGS="$LDFLAGS -lm"
 cd ${GRPC_PATH}
 make clean
-make
+LDFLAGS="-lm" make
 sudo make install
 sudo ldconfig
 
 cd ${PROJECT_PATH}
 git clone https://github.com/googleapis/googleapis.git
 cd googleapis/
-make LANGUAGE=cpp
+GOOGLEAPIS_GENS_PATH=${PROJECT_PATH}/googleapis/gens make LANGUAGE=cpp
 ```
 
-4. Make sure you setup environment variable `$GOOGLEAPIS_GENS_PATH`
-```
-export GOOGLEAPIS_GENS_PATH=${PROJECT_PATH}/googleapis/gens
-```
-
-5. Build this project
+4. Build this project
 ```
 cd ${PROJECT_PATH}
 make run_assistant
 ```
 
-6. Get credentials file. It must be an end-user's credentials.
+5. Get credentials file. It must be an end-user's credentials.
 
 * Go to the [Actions Console](https://console.actions.google.com/) and register your device model, following [these instructions](https://developers.google.com/assistant/sdk/guides/library/python/embed/register-device)
 * Move it in this folder and rename it to `client_secret.json`
 * run `get_credentials.sh` in this folder. It will create the file `credentials.json`.
 
-7. Start one of the `run_assistant` samples:
+6. Start one of the `run_assistant` samples:
 
 ```bash
 ./run_assistant_file --input ./resources/weather_in_mountain_view.raw --output ./response.wav --credentials ./credentials.json
