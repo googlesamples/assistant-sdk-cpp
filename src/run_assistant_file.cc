@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
     return -2;
   }
   // Make sure the input file exists
-  std::ifstream audio_input_file(audio_input_source);
+  std::ifstream audio_input_file(audio_input_source, std::ifstream::binary);
   if (!audio_input_file) {
     std::cerr << "Audio input file \"" << audio_input_source
               << "\" does not exist." << std::endl;
@@ -246,7 +246,8 @@ int main(int argc, char** argv) {
   std::ofstream audio_output_file;
   // Make sure to rewrite contents of file
   audio_output_file.open(audio_output_source,
-                         std::ofstream::out | std::ofstream::trunc);
+                         std::ofstream::out | std::ofstream::trunc |
+						 std::ofstream::binary);
   // Check whether file was opened correctly
   if (audio_output_file.fail()) {
     std::cerr << "error opening file " << audio_output_source << std::endl;

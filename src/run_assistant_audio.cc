@@ -26,14 +26,7 @@ limitations under the License.
 #include <string>
 #include <thread>
 
-#ifdef __linux__
-#define ENABLE_ALSA
-#endif
-
-#ifdef ENABLE_ALSA
-#include "audio_input_alsa.h"
-#include "audio_output_alsa.h"
-#endif
+#include "audio_pa.h"
 
 #include "google/assistant/embedded/v1alpha2/embedded_assistant.grpc.pb.h"
 #include "google/assistant/embedded/v1alpha2/embedded_assistant.pb.h"
@@ -59,7 +52,6 @@ using grpc::Channel;
 using grpc::ClientReaderWriter;
 
 static const std::string kCredentialsTypeUserAccount = "USER_ACCOUNT";
-static const std::string kALSAAudioInput = "ALSA_INPUT";
 static const std::string kLanguageCode = "en-US";
 static const std::string kDeviceModelId = "default";
 static const std::string kDeviceInstanceId = "default";
@@ -141,11 +133,6 @@ bool GetCommandLineFlags(int argc, char** argv,
 
 int main(int argc, char** argv) {
   std::string credentials_file_path, api_endpoint, locale, html_out_command;
-#ifndef ENABLE_ALSA
-  std::cerr << "ALSA audio input is not supported on this platform."
-            << std::endl;
-  return -1;
-#endif
 
   // Initialize gRPC and DNS resolvers
   // https://github.com/grpc/grpc/issues/11366#issuecomment-328595941
@@ -154,6 +141,9 @@ int main(int argc, char** argv) {
                            &locale, &html_out_command)) {
     return -1;
   }
+
+  AudioPA audio_sys;
+  audio_sys.Open(); /* Opens default input and output */
 
   while (true) {
     // Create an AssistRequest
@@ -225,9 +215,8 @@ int main(int argc, char** argv) {
                 << request.ShortDebugString() << std::endl;
     }
     stream->Write(request);
-
-    audio_input.reset(new AudioInputALSA());
-
+    
+    audio_input.reset(&audio_sys);
     audio_input->AddDataListener(
         [stream, &request](std::shared_ptr<std::vector<unsigned char>> data) {
           request.set_audio_in(&((*data)[0]), data->size());
@@ -235,9 +224,6 @@ int main(int argc, char** argv) {
         });
     audio_input->AddStopListener([stream]() { stream->WritesDone(); });
     audio_input->Start();
-
-    AudioOutputALSA audio_output;
-    audio_output.Start();
 
     // Read responses.
     if (verbose) {
@@ -254,13 +240,8 @@ int main(int argc, char** argv) {
       }
       if (response.has_audio_out()) {
         // CUSTOMIZE: play back audio_out here.
-
-        std::shared_ptr<std::vector<unsigned char>> data(
-            new std::vector<unsigned char>);
-        data->resize(response.audio_out().audio_data().length());
-        memcpy(&((*data)[0]), response.audio_out().audio_data().c_str(),
-               response.audio_out().audio_data().length());
-        audio_output.Send(data);
+        audio_sys.Write(response.audio_out().audio_data().c_str(),
+            response.audio_out().audio_data().size() / 2);
       }
       // CUSTOMIZE: render spoken request on screen
       for (int i = 0; i < response.speech_results_size(); i++) {
@@ -289,8 +270,7 @@ int main(int argc, char** argv) {
       }
     }
 
-    audio_output.Stop();
-
+    audio_sys.Stop();
     grpc::Status status = stream->Finish();
     if (!status.ok()) {
       // Report the RPC failure.
@@ -299,6 +279,8 @@ int main(int argc, char** argv) {
       return -1;
     }
   }
+
+  audio_sys.Close();
 
   return 0;
 }

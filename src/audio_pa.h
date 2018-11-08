@@ -16,15 +16,29 @@ limitations under the License.
 
 #include "audio_input.h"
 
-class AudioInputALSA : public AudioInput {
+#include <portaudio.h>
+
+class AudioPA : public AudioInput {
  public:
-  ~AudioInputALSA() override {}
+  ~AudioPA() override {}
 
   virtual std::unique_ptr<std::thread> GetBackgroundThread() override;
 
+  int Open();
+  int Write(const void *buffer, unsigned long frames);
+  void Stop();
+  void Close();
+
  private:
+
+  static constexpr int kInputNumChannels = 1;
+  static constexpr int kOutputNumChannels = 1;
+
   // For 16000Hz, it's about 0.1 second.
-  static constexpr int kFramesPerPacket = 1600;
-  // 1 channel, S16LE, so 2 bytes each frame.
-  static constexpr int kBytesPerFrame = 2;
+  static constexpr double kSampleRate = 16000;
+  static constexpr PaSampleFormat kSampleFormat = paInt16;
+  static constexpr unsigned long kFramesPerBuffer = 512;
+
+  PaStream* stream;
+
 };

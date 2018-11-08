@@ -1,0 +1,103 @@
+version: 0.1.0.{build}
+
+shallow_clone: true
+clone_depth: 1
+
+configuration:
+- MinSizeRel
+- Release
+- Debug
+
+environment:
+  DIST_DIR: '%APPVEYOR_BUILD_FOLDER%\dist'
+  GOPATH: c:\go
+
+  matrix:
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: 'Visual Studio 2015'
+      VCVARSALL: '%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat'
+      ARCHITECTURE: amd64_x86
+      ARCHIVE: VS2015_%CONFIGURATION%_x86_%APPVEYOR_BUILD_NUMBER%
+      GENERATOR: 'NMake Makefiles'
+      CMAKE_ARGS: 
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: 'Visual Studio 2015'
+      VCVARSALL: '%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat'
+      ARCHITECTURE: amd64
+      ARCHIVE: VS2015_%CONFIGURATION%_x64_%APPVEYOR_BUILD_NUMBER%
+      GENERATOR: 'NMake Makefiles'
+      CMAKE_ARGS: 
+
+#    - APPVEYOR_BUILD_WORKER_IMAGE: 'Visual Studio 2015'
+#      VCVARSALL: '%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat'
+#      ARCHITECTURE: amd64_arm
+#      ARCHIVE: VS2015_%CONFIGURATION%_ARM_%APPVEYOR_BUILD_NUMBER%
+#      GENERATOR: 'NMake Makefiles'
+#      CMAKE_ARGS: 
+
+
+#    - APPVEYOR_BUILD_WORKER_IMAGE: 'Visual Studio 2017'
+#      VCVARSALL: '%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat'
+#      ARCHITECTURE: amd64_arm
+#      ARCHIVE: VS2017_%CONFIGURATION%_ARM_%APPVEYOR_BUILD_NUMBER%
+#      GENERATOR: 'NMake Makefiles'
+#      CMAKE_ARGS: 
+
+#    - APPVEYOR_BUILD_WORKER_IMAGE: 'Visual Studio 2017'
+#      VCVARSALL: '%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat'
+#      ARCHITECTURE: amd64_arm64
+#      ARCHIVE: VS2017_%CONFIGURATION%_ARM64_%APPVEYOR_BUILD_NUMBER%
+#      GENERATOR: 'NMake Makefiles'
+#      CMAKE_ARGS: 
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: 'Visual Studio 2017'
+      VCVARSALL: '%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat'
+      ARCHITECTURE: amd64_x86
+      ARCHIVE: VS2017_%CONFIGURATION%_x86_%APPVEYOR_BUILD_NUMBER%
+      GENERATOR: 'NMake Makefiles'
+      CMAKE_ARGS: 
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: 'Visual Studio 2017'
+      VCVARSALL: '%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat'
+      ARCHITECTURE: amd64
+      ARCHIVE: VS2017_%CONFIGURATION%_x86_%APPVEYOR_BUILD_NUMBER%
+      GENERATOR: 'NMake Makefiles'
+      CMAKE_ARGS: 
+
+init:
+  - echo BUILD_NUMBER=%APPVEYOR_BUILD_NUMBER%
+
+stack:
+  - go 1.11
+
+install:
+  - cmake --version
+  - go version
+
+build:
+  parallel: true
+
+build_script:
+
+  - if exist "%VCVARSALL%" ( call "%VCVARSALL%" %ARCHITECTURE% )
+
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - mkdir build
+  - cd build
+
+  - cmake %CMAKE_TOOLCHAIN_ARGS% -G"%GENERATOR%" -DCMAKE_VERBOSE_MAKEFILE=TRUE
+          -DCMAKE_BUILD_TYPE=%CONFIGURATION% 
+          "-DCMAKE_INSTALL_PREFIX=%DIST_DIR%\%APPVEYOR_BUILD_WORKER_IMAGE%"
+          -DBUILD_NUMBER=%APPVEYOR_BUILD_NUMBER% %CMAKE_ARGS%
+          ..
+
+  - cmake --build . --config %CONFIGURATION% --target all
+
+after_build:
+  - cd %DIST_DIR%
+  - 7z a -tzip %ARCHIVE%.zip "%APPVEYOR_BUILD_WORKER_IMAGE%"
+  - certutil -hashfile %ARCHIVE%.zip MD5 > %ARCHIVE%.md5
+
+artifacts:
+  - path: dist\$(ARCHIVE).zip
+  - path: dist\$(ARCHIVE).md5

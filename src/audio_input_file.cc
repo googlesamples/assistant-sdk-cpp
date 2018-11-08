@@ -18,11 +18,12 @@ limitations under the License.
 
 #include <fstream>
 #include <iostream>
+#include <string>
 
 std::unique_ptr<std::thread> AudioInputFile::GetBackgroundThread() {
   return std::unique_ptr<std::thread>(new std::thread([this]() {
     // Initialize.
-    std::ifstream file_stream(file_path_);
+    std::ifstream file_stream(file_path_, std::ifstream::binary);
     if (!file_stream) {
       std::cerr << "AudioInputFile cannot open file " << file_path_
                 << std::endl;
