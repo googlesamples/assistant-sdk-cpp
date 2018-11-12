@@ -70,9 +70,16 @@ set(_PROTOBUF_LIBRARIES ${PROTOBUF_LIB})
 
 set(GOOGLEAPIS_GENS_PATH ${CMAKE_INSTALL_PREFIX}/gens)
 
-if(NOT CMAKE_CROSSCOMPILING)
-   set(PROTOBUF_ROOT_FOLDER ${_GRPC_SRC_PATH}-build)
-   set(GRPC_PLUGINPATH ${_GRPC_SRC_PATH}-build)
+if(CMAKE_CROSSCOMPILING)
+    if(NOT PROTOBUF_ROOT_FOLDER)
+        set(PROTOBUF_ROOT_FOLDER /usr/local/bin)
+    endif()
+    if(NOT GRPC_PLUGINPATH)
+        set(GRPC_PLUGINPATH /usr/local/bin)
+    endif()
+else()    
+    set(PROTOBUF_ROOT_FOLDER ${_GRPC_SRC_PATH}-build)
+    set(GRPC_PLUGINPATH ${_GRPC_SRC_PATH}-build)
 endif()
 
 ExternalProject_Add(googleapis
