@@ -1,7 +1,10 @@
 steps:
 - name: 'ubuntu'
-  args: ['apt-get', 'update', '&&', 'apt-get', 'install', '-y', 'git-core']
-  id: 'Install Git'
+  args: ['apt-get', 'update']
+  id: 'Update apt-get'
+- name: 'ubuntu'
+  args: ['apt-get', 'install', '-y', 'git-core']
+  id: 'Install git'
 - name: 'ubuntu'
   args: ['bash', './tests/build.sh']
   id: 'Run build script'
