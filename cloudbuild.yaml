@@ -1,6 +1,6 @@
 steps:
 - name: 'ubuntu'
-  args: ['apt-get', 'install', '-y', 'git-core']
+  args: ['apt-get', 'update', '&&', 'apt-get', 'install', '-y', 'git-core']
   id: 'Install Git'
 - name: 'ubuntu'
   args: ['bash', './tests/build.sh']
