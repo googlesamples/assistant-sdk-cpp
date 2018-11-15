@@ -5,6 +5,10 @@ set -o pipefail
 set -x
 PROJECT_PATH=$(pwd)
 
+# Step 0. Install git?
+sudo apt-get update
+sudo apt-get install -y git
+
 # Step 1. Clean up any dependencies
 echo "Cleaning dependencies"
 ./tests/clean-all.sh
