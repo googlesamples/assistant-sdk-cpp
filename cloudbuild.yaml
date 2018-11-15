@@ -3,5 +3,5 @@ steps:
   args: ['apt-get', 'update']
   id: 'Update apt-get'
 - name: 'ubuntu'
-  args: ['bash', './tests/build.sh']
+  args: ['bash', './tests/build-cb.sh']
   id: 'Run build script'
