@@ -3,7 +3,7 @@ steps:
   args: ['apt-get', 'update']
   id: 'Update apt-get'
 - name: 'ubuntu'
-  args: ['apt-get', 'install', '-y', 'git-core']
+  args: ['apt-get', 'install', '-y', 'git']
   id: 'Install git'
 - name: 'ubuntu'
   args: ['bash', './tests/build.sh']
