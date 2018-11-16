@@ -5,3 +5,7 @@ steps:
 - name: 'ubuntu'
   args: ['bash', './tests/build-cb.sh']
   id: 'Run build script'
+artifacts:
+  objects:
+    location: 'gs://fleker-assistant-cpp-cloud-build-artifacts/'
+    paths: ['run_assistant_*']
