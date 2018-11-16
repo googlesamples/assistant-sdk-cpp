@@ -5,7 +5,10 @@ steps:
 - name: 'ubuntu'
   args: ['bash', './tests/build-cb.sh']
   id: 'Run build script'
+  timeout: 1800s # 30 minutes
 artifacts:
   objects:
     location: 'gs://fleker-assistant-cpp-cloud-build-artifacts/'
     paths: ['run_assistant_*']
+options:
+  machineType: 'N1_HIGHCPU_32'
