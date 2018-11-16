@@ -66,12 +66,16 @@ echo "Compiling Google APIs"
 cd "${PROJECT_PATH}"
 git clone https://github.com/googleapis/googleapis.git
 cd googleapis/
-make LANGUAGE=cpp -j16 \
-    google/assistant/embedded/v1alpha2/embedded_assistant.pb.cc \
-    google/api/annotations.pb.cc \
-    google/type/latlng.pb.cc \
-    google/api/http.pb.cc \
-    google/rpc/status.pb.cc
+# Remove unnecessary directories
+cd google/
+find . ! -name 'embedded_assistant.proto' \
+      ! -name 'annotations.proto' \
+      ! -name 'latlng.proto' \
+      ! -name 'http.proto' \
+      ! -name 'status.proto' \
+      -type f -exec rm '{}' \;
+cd ../
+make LANGUAGE=cpp -j16
 
 # Step 4. Build assistant-grpc
 echo "Compiling C++ Assistant"
