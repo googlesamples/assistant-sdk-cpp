@@ -29,12 +29,6 @@ GOOGLEAPIS_ASSISTANT_CCS = ./googleapis/gens/google/assistant/embedded/v1alpha2/
 
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
-<<<<<<< HEAD
-CXX = g++
-CPPFLAGS += -I/usr/local/include -pthread -I$(GOOGLEAPIS_GENS_PATH) \
-	    -I$(GRPC_SRC_PATH) -I./src/
-CXXFLAGS += -std=c++11
-=======
 
 PKG_CONFIG ?= pkg-config
 HAS_PKG_CONFIG ?= $(shell command -v $(PKG_CONFIG) >/dev/null 2>&1 && echo true || echo false)
@@ -51,33 +45,27 @@ ALSA_LDFLAGS ?=
 endif
 
 CPPFLAGS += -I$(GOOGLEAPIS_GENS_PATH) \
-            -I$(GRPC_SRC_PATH) \
-            -I./src
+			-I$(GRPC_SRC_PATH) \
+			-I./src
 
 CXXFLAGS += -std=c++11 $(GRPC_GRPCPP_CFLAGS)
 
->>>>>>> b62c37b... Apply Google's linter (#49)
 # grpc_cronet is for JSON functions in gRPC library.
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += $(GRPC_GRPCPP_LDLAGS) \
-           -lgrpc++_reflection -lgrpc_cronet \
-           -lprotobuf -lpthread -ldl
+			-lgrpc++_reflection -lgrpc_cronet \
+			-lprotobuf -lpthread -ldl
 else
 LDFLAGS += $(GRPC_GRPCPP_LDLAGS) \
-           -lgrpc_cronet -Wl,--no-as-needed -lgrpc++_reflection \
-           -Wl,--as-needed -lprotobuf -lpthread -ldl
+			-lgrpc_cronet -Wl,--no-as-needed -lgrpc++_reflection \
+			-Wl,--as-needed -lprotobuf -lpthread -ldl
 endif
 
 AUDIO_SRCS =
 ifeq ($(SYSTEM),Linux)
-<<<<<<< HEAD
-AUDIO_SRCS += src/audio_input_alsa.cc src/audio_output_alsa.cc
-LDFLAGS += `pkg-config --libs alsa`
-=======
 AUDIO_SRCS += ./src/assistant/audio_input_alsa.cc ./src/assistant/audio_output_alsa.cc
 CXXFLAGS += $(ALSA_CFLAGS)
 LDFLAGS += $(ALSA_LDFLAGS)
->>>>>>> b62c37b... Apply Google's linter (#49)
 endif
 
 CORE_SRCS = ./src/assistant/base64_encode.cc ./src/assistant/json_util.cc
@@ -87,20 +75,20 @@ ASSISTANT_FILE_SRCS = ./src/assistant/run_assistant_file.cc
 ASSISTANT_TEXT_SRCS = ./src/assistant/run_assistant_text.cc
 
 ASSISTANT_O       = $(CORE_SRCS:.cc=.o) \
-                    $(AUDIO_SRCS:.cc=.o) \
-                    $(AUDIO_INPUT_FILE_SRCS:.cc=.o) \
-                    $(ASSISTANT_AUDIO_SRCS:.cc=.o) \
-                    $(ASSISTANT_FILE_SRCS:.cc=.o) \
-                    $(ASSISTANT_TEXT_SRCS:.cc=.o)
+					$(AUDIO_SRCS:.cc=.o) \
+					$(AUDIO_INPUT_FILE_SRCS:.cc=.o) \
+					$(ASSISTANT_AUDIO_SRCS:.cc=.o) \
+					$(ASSISTANT_FILE_SRCS:.cc=.o) \
+					$(ASSISTANT_TEXT_SRCS:.cc=.o)
 ASSISTANT_AUDIO_O = $(CORE_SRCS:.cc=.o) \
-                    $(AUDIO_SRCS:.cc=.o) \
-                    $(AUDIO_INPUT_FILE_SRCS:.cc=.o) \
-                    $(ASSISTANT_AUDIO_SRCS:.cc=.o)
+					$(AUDIO_SRCS:.cc=.o) \
+					$(AUDIO_INPUT_FILE_SRCS:.cc=.o) \
+					$(ASSISTANT_AUDIO_SRCS:.cc=.o)
 ASSISTANT_FILE_O  = $(CORE_SRCS:.cc=.o) \
-                    $(AUDIO_INPUT_FILE_SRCS:.cc=.o) \
-                    $(ASSISTANT_FILE_SRCS:.cc=.o)
+					$(AUDIO_INPUT_FILE_SRCS:.cc=.o) \
+					$(ASSISTANT_FILE_SRCS:.cc=.o)
 ASSISTANT_TEXT_O  = $(CORE_SRCS:.cc=.o) \
-                    $(ASSISTANT_TEXT_SRCS:.cc=.o)
+					$(ASSISTANT_TEXT_SRCS:.cc=.o)
 
 .PHONY: all
 all: run_assistant

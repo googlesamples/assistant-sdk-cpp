@@ -51,15 +51,15 @@ git submodule update --init
 
 echo "Compiling gRPC protobufs"
 cd third_party/protobuf
-./autogen.sh && ./configure && make -j16
-make install -j16
+./autogen.sh && ./configure && make -j64
+make install -j64
 ldconfig
 
 echo "Compiling gRPC"
 cd "${GRPC_PATH}"
 make clean
-LDFLAGS="-lm" make
-make install
+LDFLAGS="-lm" make -j64
+make install -j64
 ldconfig
 
 echo "Compiling Google APIs"
@@ -75,7 +75,7 @@ find . ! -name 'embedded_assistant.proto' \
       ! -name 'status.proto' \
       -type f -exec rm '{}' \;
 cd ../
-make LANGUAGE=cpp -j16
+make LANGUAGE=cpp -j64
 
 # Step 4. Build assistant-grpc
 echo "Compiling C++ Assistant"
