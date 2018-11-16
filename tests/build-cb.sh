@@ -51,8 +51,8 @@ git submodule update --init
 
 echo "Compiling gRPC protobufs"
 cd third_party/protobuf
-./autogen.sh && ./configure && make
-make install
+./autogen.sh && ./configure && make -j16
+make install -j16
 ldconfig
 
 echo "Compiling gRPC"
