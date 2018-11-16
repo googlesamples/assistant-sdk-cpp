@@ -66,7 +66,7 @@ echo "Compiling Google APIs"
 cd "${PROJECT_PATH}"
 git clone https://github.com/googleapis/googleapis.git
 cd googleapis/
-make LANGUAGE=cpp \
+make LANGUAGE=cpp -j16 \
     google/assistant/embedded/v1alpha2/embedded_assistant.pb.cc \
     google/api/annotations.pb.cc \
     google/type/latlng.pb.cc \
