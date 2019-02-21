@@ -62,6 +62,7 @@ sudo ldconfig
 cd ${PROJECT_PATH}
 git clone https://github.com/googleapis/googleapis.git
 cd googleapis/
+git checkout 980cdfa
 make LANGUAGE=cpp
 ```
 
