@@ -55,7 +55,7 @@ class AudioInput {
       return;
     }
 
-    send_thread_ = std::move(GetBackgroundThread());
+    send_thread_ = GetBackgroundThread();
     is_running_ = true;
     return;
   }

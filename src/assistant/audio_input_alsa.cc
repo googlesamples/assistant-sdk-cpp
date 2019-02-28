@@ -91,10 +91,10 @@ std::unique_ptr<std::thread> AudioInputALSA::GetBackgroundThread() {
     snd_pcm_hw_params_free(pcm_params);
 
     while (is_running_) {
-      std::shared_ptr<std::vector<unsigned char>> audio_data(
-          new std::vector<unsigned char>(kFramesPerPacket * kBytesPerFrame));
+      auto audio_data = std::make_shared<std::vector<unsigned char>>(
+          kFramesPerPacket * kBytesPerFrame);
       int pcm_read_ret =
-          snd_pcm_readi(pcm_handle, &(*audio_data.get())[0], kFramesPerPacket);
+          snd_pcm_readi(pcm_handle, audio_data->data(), kFramesPerPacket);
       if (pcm_read_ret == -EAGAIN) {
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
       } else if (pcm_read_ret < 0) {

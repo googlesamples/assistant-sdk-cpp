@@ -88,7 +88,7 @@ bool AudioOutputALSA::Start() {
   snd_pcm_hw_params_free(pcm_params);
 
   isRunning = true;
-  alsaThread.reset(new std::thread([this, pcm_handle]() {
+  alsaThread = std::thread([this, pcm_handle]() {
     while (isRunning) {
       std::unique_lock<std::mutex> lock(audioDataMutex);
 
@@ -104,7 +104,7 @@ bool AudioOutputALSA::Start() {
       audioData.erase(audioData.begin());
       // 1 channel, S16LE, so 2 bytes each frame.
       int frames = data->size() / 2;
-      int pcm_write_ret = snd_pcm_writei(pcm_handle, &(*data.get())[0], frames);
+      int pcm_write_ret = snd_pcm_writei(pcm_handle, data->data(), frames);
       if (pcm_write_ret < 0) {
         int pcm_recover_ret = snd_pcm_recover(pcm_handle, pcm_write_ret, 0);
         if (pcm_recover_ret < 0) {
@@ -118,7 +118,7 @@ bool AudioOutputALSA::Start() {
     // Wait for all data to be consumed.
     snd_pcm_drain(pcm_handle);
     snd_pcm_close(pcm_handle);
-  }));
+  });
   return true;
 }
 
@@ -130,8 +130,7 @@ void AudioOutputALSA::Stop() {
   }
 
   isRunning = false;
-  alsaThread->join();
-  alsaThread.reset(nullptr);
+  alsaThread.join();
 }
 
 void AudioOutputALSA::Send(std::shared_ptr<std::vector<unsigned char>> data) {
