@@ -2,7 +2,7 @@ include (ExternalProject)
 include(CheckFunctionExists)
 
 if(NOT GRPC_VERSION)
-    set(GRPC_VERSION v1.16.0)
+    set(GRPC_VERSION v1.27.2)
 endif()
 
 if(ANDROID)

@@ -80,6 +80,7 @@ endif()
 
 set(LDFLAGS
     grpc++ grpc gpr grpc_cronet address_sorting
+    upb absl_base absl_strings absl_throw_delegate
     ${_PROTOBUF_LIBRARIES} ${_CARES_LIBRARIES}
     ${_ZLIB_LIBRARIES} ${_SSL_LIBRARIES}
     ${_ALLTARGETS_LIBRARIES}
