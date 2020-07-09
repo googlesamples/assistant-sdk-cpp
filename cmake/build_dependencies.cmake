@@ -2,7 +2,7 @@ include (ExternalProject)
 include(CheckFunctionExists)
 
 if(NOT GRPC_VERSION)
-    set(GRPC_VERSION v1.27.2)
+    set(GRPC_VERSION v1.30.1)
 endif()
 
 if(ANDROID)
@@ -11,15 +11,23 @@ if(ANDROID)
         -DRUN_HAVE_POSIX_REGEX=0
         -DRUN_HAVE_STEADY_CLOCK=0
         -DCMAKE_EXE_LINKER_FLAGS=-llog
-        -DgRPC_BUILD_CODEGEN=OFF
-        -DgRPC_BUILD_CSHARP_EXT=OFF
     )
+endif()
+
+
+set(GRPC_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/grpc_ext-prefix/src/grpc_ext)
+
+if(NOT MSVC)
+    set(gRPC_ZLIB_PROVIDER package)
+else()
+    set(gRPC_ZLIB_PROVIDER module)
 endif()
 
 ExternalProject_Add(grpc_ext
     GIT_REPOSITORY "https://github.com/grpc/grpc"
     GIT_TAG ${GRPC_VERSION}
     GIT_SHALLOW 1
+    PATCH_COMMAND ""
     UPDATE_COMMAND ""
     BUILD_IN_SOURCE 0
     CMAKE_ARGS
@@ -28,22 +36,43 @@ ExternalProject_Add(grpc_ext
      -DANDROID_STL=${ANDROID_STL}
      -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
      -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+     -DCMAKE_STAGING_PREFIX=${CMAKE_STAGING_PREFIX}
      -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
      -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE}
+     -DCMAKE_ASM_NASM_COMPILER=${CMAKE_ASM_NASM_COMPILER}
+     -DgRPC_INSTALL=ON
+     -DgRPC_BUILD_CODEGEN=ON
+     -DgRPC_BUILD_CSHARP_EXT=ON
+     -DgRPC_ZLIB_PROVIDER=${gRPC_ZLIB_PROVIDER}
      ${GRPC_ANDROID_ARGS}
 )
 set(_GRPC_SRC_PATH ${CMAKE_BINARY_DIR}/grpc_ext-prefix/src/grpc_ext)
 
 set(_GRPC_LIBRARIES_DIR ${_GRPC_SRC_PATH}-build)
 
+set(_ABSL_LIBRARIES
+    absl_bad_optional_access
+    absl_str_format_internal
+    absl_time
+    absl_time_zone
+    absl_civil_time
+    absl_strings
+    absl_strings_internal
+    absl_throw_delegate
+    absl_int128
+    absl_base
+    absl_spinlock_wait
+    absl_raw_logging_internal
+    absl_log_severity
+    absl_dynamic_annotations
+)
+
 set(_SSL_LIBRARIES_DIRS
     ${_GRPC_SRC_PATH}-build/third_party/boringssl/crypto
     ${_GRPC_SRC_PATH}-build/third_party/boringssl/ssl
-    ${_GRPC_SRC_PATH}-build/third_party/boringssl/decrepit
 )
-set(_SSL_LIBRARIES ssl decrepit crypto)
-
+set(_SSL_LIBRARIES ssl crypto)
 
 if(NOT MSVC)
     set(_ZLIB_LIBRARIES z)
@@ -55,8 +84,6 @@ else()
 	endif()
 endif()
 
-set(_CARES_LIBRARIES cares)
-
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     set(PROTOBUF_LIB protobufd)
 else()
@@ -66,42 +93,6 @@ if(MSVC)
     set(PROTOBUF_LIB lib${PROTOBUF_LIB})
 endif()
 set(_PROTOBUF_LIBRARIES ${PROTOBUF_LIB})
-
-
-set(GOOGLEAPIS_GENS_PATH ${CMAKE_INSTALL_PREFIX}/gens)
-
-if(CMAKE_CROSSCOMPILING)
-    if(NOT PROTOBUF_ROOT_FOLDER)
-        set(PROTOBUF_ROOT_FOLDER /usr/local/bin)
-    endif()
-    if(NOT GRPC_PLUGINPATH)
-        set(GRPC_PLUGINPATH /usr/local/bin)
-    endif()
-else()    
-    set(PROTOBUF_ROOT_FOLDER ${_GRPC_SRC_PATH}-build)
-    set(GRPC_PLUGINPATH ${_GRPC_SRC_PATH}-build)
-endif()
-
-ExternalProject_Add(googleapis
-    GIT_REPOSITORY https://github.com/googleapis/googleapis.git
-    GIT_TAG master
-    GIT_SHALLOW 1
-    PATCH_COMMAND 
-        cmake -E copy 
-		    ${CMAKE_SOURCE_DIR}/cmake/build_googleapis.cmake
-            ${CMAKE_BINARY_DIR}/googleapis-prefix/src/googleapis/CMakeLists.txt
-    UPDATE_COMMAND ""
-    BUILD_IN_SOURCE 0
-    CMAKE_ARGS
-    -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-    -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-    -DProtobuf_DEBUG=OFF
-    -DProtobuf_SRC_ROOT_FOLDER=${PROTOBUF_ROOT_FOLDER}
-    -DGRPCPLUGIN_PATH=${GRPC_PLUGINPATH}
-    -DOUTPUT=${GOOGLEAPIS_GENS_PATH}
-    INSTALL_COMMAND ""
-)
-add_dependencies(googleapis grpc_ext)
 
 
 if(MSVC)
@@ -124,6 +115,7 @@ if(NOT ANDROID)
         CMAKE_ARGS
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_STAGING_PREFIX=${CMAKE_STAGING_PREFIX}
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE}
@@ -145,6 +137,7 @@ else()
         -DANDROID_STL=${ANDROID_STL}
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_STAGING_PREFIX=${CMAKE_STAGING_PREFIX}
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE}
@@ -171,6 +164,7 @@ if(NOT HAVE_GETOPT_C)
             -DANDROID_STL=${ANDROID_STL}
             -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
             -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+            -DCMAKE_STAGING_PREFIX=${CMAKE_STAGING_PREFIX}
             -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
             -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE}
@@ -184,14 +178,17 @@ endif()
 
 
 include_directories(
-    ${CMAKE_INSTALL_PREFIX}/include
+    ${CMAKE_STAGING_PREFIX}/include
     ${_GRPC_SRC_PATH}
-    ${GOOGLEAPIS_GENS_PATH}
 )
 
 link_directories(
-    ${CMAKE_INSTALL_PREFIX}/lib
-    ${CMAKE_INSTALL_PREFIX}/lib/static
+    ${CMAKE_STAGING_PREFIX}/lib
+    ${CMAKE_STAGING_PREFIX}/lib/static
     ${_GRPC_LIBRARIES_DIR}
     ${_SSL_LIBRARIES_DIRS}
 )
+
+set(Protobuf_PROTOC_EXECUTABLE ${CMAKE_STAGING_PREFIX}/bin/protoc${CMAKE_EXECUTABLE_SUFFIX})
+
+set(PROTO_BASE_PATH ${CMAKE_CURRENT_BINARY_DIR}/grpc_ext-prefix/src/grpc_ext/third_party/googleapis)

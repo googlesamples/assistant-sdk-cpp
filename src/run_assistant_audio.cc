@@ -35,7 +35,6 @@ limitations under the License.
 #include "audio_input.h"
 #include "audio_input_file.h"
 #include "base64_encode.h"
-#include "json_util.h"
 
 namespace assistant = google::assistant::embedded::v1alpha2;
 

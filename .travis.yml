@@ -9,17 +9,9 @@ compiler:
   - clang
 
 env:
-  - BUILD_TYPE=Debug CMAKE_ARGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=TRUE"
-  - BUILD_TYPE=Debug CMAKE_ARGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=TRUE"
-  - BUILD_TYPE=Debug CMAKE_ARGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=TRUE"
-  
-  - BUILD_TYPE=Release CMAKE_ARGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=TRUE"
-  - BUILD_TYPE=Release CMAKE_ARGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=TRUE"
-  - BUILD_TYPE=Release CMAKE_ARGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=TRUE"
-
-  - BUILD_TYPE=MinSizeRel CMAKE_ARGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=TRUE"
-  - BUILD_TYPE=MinSizeRel CMAKE_ARGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=TRUE"
-  - BUILD_TYPE=MinSizeRel CMAKE_ARGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=TRUE"
+  - BUILD_TYPE=Debug
+  - BUILD_TYPE=Release
+  - BUILD_TYPE=MinSizeRel
 
 addons:
   apt:
@@ -30,26 +22,27 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mkdir ${DEPS_DIR} && cd ${DEPS_DIR} && pwd; fi
 
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_retry wget --no-check-certificate https://cmake.org/files/v3.11/cmake-3.11.0-Linux-x86_64.tar.gz; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "96d67e21f0983ebf0fffc5b106ec338c *cmake-3.11.0-Linux-x86_64.tar.gz" > cmake_md5.txt; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_retry wget --no-check-certificate https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3-Linux-x86_64.tar.gz; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "06bb006122e8e094f942bc9b2d999c92 *cmake-3.17.3-Linux-x86_64.tar.gz" > cmake_md5.txt; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then md5sum -c cmake_md5.txt; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar -xvf cmake-3.11.0-Linux-x86_64.tar.gz > /dev/null; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mv cmake-3.11.0-Linux-x86_64 cmake-install; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar -xvf cmake-3.17.3-Linux-x86_64.tar.gz > /dev/null; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mv cmake-3.17.3-Linux-x86_64 cmake-install; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then PATH=${DEPS_DIR}/cmake-install:${DEPS_DIR}/cmake-install/bin:$PATH; fi
 
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_retry wget --no-check-certificate https://dl.google.com/go/go1.11.1.linux-amd64.tar.gz; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "a6103c8157246dd1ac70528878994f31 *go1.11.1.linux-amd64.tar.gz" > go_md5.txt; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_retry wget --no-check-certificate https://golang.org/dl/go1.14.4.linux-amd64.tar.gz; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "0ea61d0d7e05bbe454b8b19569ad86c8 *go1.14.4.linux-amd64.tar.gz" > go_md5.txt; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then md5sum -c go_md5.txt; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar -xzf go1.11.1.linux-amd64.tar.gz > /dev/null; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar -xzf go1.14.4.linux-amd64.tar.gz > /dev/null; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export GOROOT=${DEPS_DIR}/go; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then PATH=${DEPS_DIR}/go/bin:$PATH; fi
-  
 
 before_script:
   - cd ${TRAVIS_BUILD_DIR}
   - mkdir build && cd build
-  - cmake -DCMAKE_VERBOSE_MAKEFILE=FALSE -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
-          -DCMAKE_INSTALL_PREFIX=${TRAVIS_BUILD_DIR}/build/dist ${CMAKE_ARGS}
-          ..
+  - cmake ..
+          -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+          -DCMAKE_VERBOSE_MAKEFILE=TRUE
+          -DCMAKE_STAGING_PREFIX=${TRAVIS_BUILD_DIR}/dist/usr/local
+
 script:
   - cmake --build . --config ${BUILD_TYPE} --target install

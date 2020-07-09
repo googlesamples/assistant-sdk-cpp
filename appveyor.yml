@@ -68,11 +68,16 @@ init:
   - echo BUILD_NUMBER=%APPVEYOR_BUILD_NUMBER%
 
 stack:
-  - go 1.11
+  - go 1.14.4
 
 install:
+  - echo Downloading Yasm...
+  - mkdir windows_build_tools
+  - powershell -Command "(New-Object Net.WebClient).DownloadFile('https://www.tortall.net/projects/yasm/releases/yasm-1.3.0-win64.exe', 'windows_build_tools\yasm.exe')"
+  - set PATH=%cd%\windows_build_tools;%PATH%
   - cmake --version
   - go version
+  - yasm --version
 
 build:
   parallel: true
@@ -85,12 +90,15 @@ build_script:
   - mkdir build
   - cd build
 
-  - cmake %CMAKE_TOOLCHAIN_ARGS% -G"%GENERATOR%" -DCMAKE_VERBOSE_MAKEFILE=TRUE
+  - cmake %CMAKE_TOOLCHAIN_ARGS% -G"%GENERATOR%"
+          -DCMAKE_VERBOSE_MAKEFILE=TRUE
           -DCMAKE_BUILD_TYPE=%CONFIGURATION% 
-          "-DCMAKE_INSTALL_PREFIX=%DIST_DIR%\%APPVEYOR_BUILD_WORKER_IMAGE%"
+          -DCMAKE_ASM_NASM_COMPILER="yasm.exe"
+          -DCMAKE_STAGING_PREFIX="%DIST_DIR%\%APPVEYOR_BUILD_WORKER_IMAGE%\${CMAKE_INSTALL_PREFIX}"
           -DBUILD_NUMBER=%APPVEYOR_BUILD_NUMBER% %CMAKE_ARGS%
           ..
 
+  - set CL=/MP
   - cmake --build . --config %CONFIGURATION% --target all
 
 after_build:
