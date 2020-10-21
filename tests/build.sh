@@ -12,24 +12,25 @@ echo "Installing dependencies"
 sudo apt-get install -y autoconf automake libtool build-essential curl unzip pkg-config
 sudo apt-get install -y libasound2-dev  # For ALSA sound output
 sudo apt-get install -y libcurl4-openssl-dev # CURL development library
+sudo apt-get install -y cmake
+sudo apt-get install -y libssl-dev
 
 # Step 3. Build protocol buffer, gRPC, and Google APIs
 git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
 GRPC_PATH=${PROJECT_PATH}/grpc
 cd ${GRPC_PATH}
 # Checkout stable release of gRPC
-git checkout v1.11.0
+git checkout v1.32.0
 git submodule update --init
 
-echo "Compiling gRPC protobufs"
-cd third_party/protobuf
-./autogen.sh && ./configure && make
-sudo make install
-sudo ldconfig
-
 echo "Compiling gRPC"
-export LDFLAGS="$LDFLAGS -lm"
+# export LDFLAGS="$LDFLAGS -lm"
 cd ${GRPC_PATH}
+mkdir -p cmake/build
+cd cmake/build
+cmake -DgRPC_INSTALL=ON \
+      -DgRPC_BUILD_TESTS=OFF \
+      ../..
 make clean
 make
 sudo make install

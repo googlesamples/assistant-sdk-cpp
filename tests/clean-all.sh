@@ -15,6 +15,7 @@ sudo rm -rf /usr/local/bin/grpc_* \
     /usr/local/lib/libproto* \
     /usr/local/lib/libgpr* \
     /usr/local/lib/libgrpc* \
+    /usr/local/lib/libupb* \
     /usr/local/lib/pkgconfig/protobuf* \
     /usr/local/lib/pkgconfig/grpc* \
     /usr/local/share/grpc/
