@@ -93,19 +93,25 @@ void PrintUsage() {
             << "--credentials <credentials_file> "
             << "[--api_endpoint <API endpoint>] "
             << "[--locale <locale>]"
-            << "[--html_out <command to load HTML page>]" << std::endl;
+            << "[--html_out <command to load HTML page>]"
+            << "[--model_id <model of device>]"
+            << "[--device_id <device instance id>]" << std::endl;
 }
 
 bool GetCommandLineFlags(int argc, char** argv,
                          std::string* credentials_file_path,
                          std::string* api_endpoint, std::string* locale,
-                         std::string* html_out_command) {
+                         std::string* html_out_command,
+                         std::string* model_id,
+                         std::string* device_id) {
   const struct option long_options[] = {
       {"credentials", required_argument, nullptr, 'c'},
       {"api_endpoint", required_argument, nullptr, 'e'},
       {"locale", required_argument, nullptr, 'l'},
       {"verbose", no_argument, nullptr, 'v'},
       {"html_out", required_argument, nullptr, 'h'},
+      {"model_id", required_argument, nullptr, 'm'},
+      {"device_id", required_argument, nullptr, 'd'},
       {nullptr, 0, nullptr, 0}};
   *api_endpoint = ASSISTANT_ENDPOINT;
   while (true) {
@@ -131,6 +137,12 @@ bool GetCommandLineFlags(int argc, char** argv,
       case 'h':
         *html_out_command = optarg;
         break;
+      case 'm':
+        *model_id = optarg;
+        break;
+      case 'd':
+        *device_id = optarg;
+        break;
       default:
         PrintUsage();
         return false;
@@ -140,7 +152,7 @@ bool GetCommandLineFlags(int argc, char** argv,
 }
 
 int main(int argc, char** argv) {
-  std::string credentials_file_path, api_endpoint, locale, html_out_command;
+  std::string credentials_file_path, api_endpoint, locale, html_out_command, model_id, device_id;
 #ifndef ENABLE_ALSA
   std::cerr << "ALSA audio input is not supported on this platform."
             << std::endl;
@@ -151,8 +163,14 @@ int main(int argc, char** argv) {
   // https://github.com/grpc/grpc/issues/11366#issuecomment-328595941
   grpc_init();
   if (!GetCommandLineFlags(argc, argv, &credentials_file_path, &api_endpoint,
-                           &locale, &html_out_command)) {
+                           &locale, &html_out_command, &model_id, &device_id)) {
     return -1;
+  }
+  if (device_id.empty()) {
+    device_id.assign(kDeviceInstanceId);
+  }
+  if (model_id.empty()) {
+    model_id.assign(kDeviceModelId);
   }
 
   while (true) {
@@ -170,8 +188,8 @@ int main(int argc, char** argv) {
     assist_config->mutable_dialog_state_in()->set_language_code(locale);
 
     // Set the DeviceConfig of the AssistRequest
-    assist_config->mutable_device_config()->set_device_id(kDeviceInstanceId);
-    assist_config->mutable_device_config()->set_device_model_id(kDeviceModelId);
+    assist_config->mutable_device_config()->set_device_id(device_id);
+    assist_config->mutable_device_config()->set_device_model_id(model_id);
 
     // Set parameters for audio output
     assist_config->mutable_audio_out_config()->set_encoding(
