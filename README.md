@@ -93,7 +93,7 @@ aplay ./response.wav --rate=16000 --format=S16_LE
 On a Linux workstation, you can alternatively use ALSA for audio input:
 
 ```bash
-./run_assistant_audio --credentials ./credentials.json
+./run_assistant_audio --credentials ./credentials.json --model_id default --device_id default
 ```
 
 You can use a text-based query instead of audio. This allows you to continually enter text queries to the Assistant.
