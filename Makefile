@@ -57,15 +57,19 @@ CPPFLAGS += -I$(GOOGLEAPIS_GENS_PATH) \
 
 CXXFLAGS += -std=c++11 $(GRPC_GRPCPP_CFLAGS)
 
-# grpc_cronet is for JSON functions in gRPC library.
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += $(GRPC_GRPCPP_LDLAGS) \
-           -lgrpc++_reflection -lgrpc_cronet \
+           -lgrpc++_reflection \
            -lprotobuf -lpthread -ldl
 else
 LDFLAGS += $(GRPC_GRPCPP_LDLAGS) \
-           -lgrpc_cronet -Wl,--no-as-needed -lgrpc++_reflection \
+           -Wl,--no-as-needed -lgrpc++_reflection \
            -Wl,--as-needed -lprotobuf -lpthread -ldl
+endif
+
+HAS_LIB_ATOMIC ?= $(shell ldconfig -p | grep libatomic >/dev/null >&1 && echo true || echo false)
+ifeq ($(HAS_LIB_ATOMIC),true)
+LDFLAGS += -latomic
 endif
 
 AUDIO_SRCS =
@@ -75,7 +79,7 @@ CXXFLAGS += $(ALSA_CFLAGS)
 LDFLAGS += $(ALSA_LDFLAGS)
 endif
 
-CORE_SRCS = ./src/assistant/base64_encode.cc ./src/assistant/json_util.cc
+CORE_SRCS = ./src/assistant/base64_encode.cc
 AUDIO_INPUT_FILE_SRCS = ./src/assistant/audio_input_file.cc
 ASSISTANT_AUDIO_SRCS = ./src/assistant/run_assistant_audio.cc
 ASSISTANT_FILE_SRCS = ./src/assistant/run_assistant_file.cc
